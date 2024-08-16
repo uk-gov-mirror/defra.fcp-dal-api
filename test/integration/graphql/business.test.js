@@ -45,7 +45,7 @@ describe('Query.business', () => {
         query Business {
           business(sbi: "107183280") {
             sbi
-            businessId
+            organisationId
             info {
               name
               reference
@@ -221,7 +221,7 @@ describe('Query.business.cph', () => {
     '5565448',
     organisationCPHFixture
   )
-  delete transformedCPH[0].businessId
+  delete transformedCPH[0].organisationId
   it('cph', async () => {
     const result = await graphql({
       source: `#graphql
@@ -269,7 +269,7 @@ describe('Query.business.customers', () => {
       query BusinessCustomers {
         business(sbi: "107183280") {
           customers {
-            customerId
+            personId
             firstName
             lastName
             crn
@@ -287,35 +287,35 @@ describe('Query.business.customers', () => {
         business: {
           customers: [
             {
-              customerId: '5263421',
+              personId: '5263421',
               firstName: 'Nicholas',
               lastName: 'SANGSTER',
               crn: '1102634220',
               role: 'Business Partner'
             },
             {
-              customerId: '5302028',
+              personId: '5302028',
               firstName: 'Ivan',
               lastName: 'Cook',
               crn: '1103020285',
               role: 'Agent'
             },
             {
-              customerId: '5311964',
+              personId: '5311964',
               firstName: 'Trevor',
               lastName: 'Graham',
               crn: '1103119648',
               role: 'Agent'
             },
             {
-              customerId: '5331098',
+              personId: '5331098',
               firstName: 'Marcus',
               lastName: 'Twigden',
               crn: '1103310984',
               role: 'Agent'
             },
             {
-              customerId: '5778203',
+              personId: '5778203',
               firstName: 'Oliver',
               lastName: 'Colwill',
               crn: '1104760827',
