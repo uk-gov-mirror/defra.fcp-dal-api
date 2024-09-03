@@ -125,7 +125,7 @@ describe('Customer', () => {
         name: 'Cliff Spence T/As Abbey Farm',
         sbi: 107591843,
         organisationId: '5625145',
-        personId: 5007136,
+        personId: '5007136',
         crn: undefined
       }
     ])
