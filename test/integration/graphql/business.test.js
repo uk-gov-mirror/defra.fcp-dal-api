@@ -369,35 +369,35 @@ describe('Query.business.customers', () => {
               personId: '5263421',
               firstName: 'Nicholas',
               lastName: 'SANGSTER',
-              crn: '1102634220',
+              crn: '1638563942',
               role: 'Business Partner'
             },
             {
               personId: '5302028',
               firstName: 'Ingrid Jerimire Klaufichus Limouhetta Mortimious Neuekind Orpheus Perimillian Quixillotrio Reviticlese',
               lastName: 'Cook',
-              crn: '1103020285',
+              crn: '9477368292',
               role: 'Agent'
             },
             {
               personId: '5311964',
               firstName: 'Trevor',
               lastName: 'Graham',
-              crn: '1103119648',
+              crn: '2446747270',
               role: 'Agent'
             },
             {
               personId: '5331098',
               firstName: 'Marcus',
               lastName: 'Twigden',
-              crn: '1103310984',
+              crn: '4804081228',
               role: 'Agent'
             },
             {
               personId: '5778203',
               firstName: 'Oliver',
               lastName: 'Colwill',
-              crn: '1104760827',
+              crn: '6148241575',
               role: 'Agent'
             }
           ]

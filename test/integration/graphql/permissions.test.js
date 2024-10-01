@@ -24,7 +24,7 @@ describe('Query.permissionGroups', () => {
           }
         `,
       variableValues: {
-        crn: '1102634220',
+        crn: '1638563942',
         sbi: '107183280'
       },
       schema,
