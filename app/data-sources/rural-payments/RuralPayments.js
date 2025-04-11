@@ -4,7 +4,7 @@ import StatusCodes from 'http-status-codes'
 import tls from 'node:tls'
 import { ProxyAgent } from 'undici'
 import { HttpError } from '../../errors/graphql.js'
-import { RURALPAYMENTS_API_REQUEST_001 } from '../../logger/codes.js'
+import { RURAL_PAYMENTS_API_REQUEST_001 } from '../../logger/codes.js'
 
 const customFetch = async (url, options) => {
   const clientCert = Buffer.from(process.env.KITS_CONNECTION_CERT, 'base64')
@@ -54,7 +54,7 @@ export class RuralPayments extends RESTDataSource {
       error,
       request,
       response: { ...error?.extensions?.response },
-      code: RURALPAYMENTS_API_REQUEST_001
+      code: RURAL_PAYMENTS_API_REQUEST_001
     })
   }
 
@@ -85,7 +85,7 @@ export class RuralPayments extends RESTDataSource {
 
     this.logger.verbose('#datasource - Rural payments - request', {
       request: { ...request, path: path.toString() },
-      code: RURALPAYMENTS_API_REQUEST_001
+      code: RURAL_PAYMENTS_API_REQUEST_001
     })
   }
 
@@ -105,7 +105,7 @@ export class RuralPayments extends RESTDataSource {
       code: RURALPAYMENTS_API_REQUEST_001
     })
     this.logger.http('#datasource - Rural payments - response', {
-      code: RURALPAYMENTS_API_REQUEST_001,
+      code: RURAL_PAYMENTS_API_REQUEST_001,
       requestTimeMs,
       request: {
         id: request.id,
@@ -122,7 +122,7 @@ export class RuralPayments extends RESTDataSource {
         body: result.parsedBody,
         size: Buffer.byteLength(JSON.stringify(response.body))
       },
-      code: RURALPAYMENTS_API_REQUEST_001,
+      code: RURAL_PAYMENTS_API_REQUEST_001,
       requestTimeMs
     })
 
