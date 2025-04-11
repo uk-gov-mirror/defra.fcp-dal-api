@@ -42,7 +42,14 @@ export class RuralPayments extends RESTDataSource {
     super(config)
 
     this.request = request
-    if (process.env.NODE_ENV != 'test') {
+    if (
+      process.env.KITS_CONNECTION_KEY &&
+      process.env.KITS_CONNECTION_CERT &&
+      process.env.CDP_HTTPS_PROXY
+    ) {
+      this.logger.debug(`key: ${process.env.KITS_CONNECTION_KEY}`)
+      this.logger.debug(`cert: ${process.env.KITS_CONNECTION_CERT}`)
+      this.logger.debug(`proxy: ${process.env.CDP_HTTPS_PROXY}`)
       this.httpCache.httpFetch = customFetch
     }
   }
