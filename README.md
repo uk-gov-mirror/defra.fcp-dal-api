@@ -292,4 +292,3 @@ It is designed to encourage use and re-use of information freely and flexibly, w
 # Running defra machine
 
 Ensure add the proxy url your .env: `RURAL_PAYMENTS_PORTAL_PROXY_URL=http://10.255.1.3:443`
-
