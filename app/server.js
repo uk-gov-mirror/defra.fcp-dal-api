@@ -1,4 +1,5 @@
 import hapi from '@hapi/hapi'
+import Inert from '@hapi/inert'
 
 import { Unit } from 'aws-embedded-metrics'
 import { v4 as uuidv4 } from 'uuid'
@@ -16,8 +17,16 @@ export const server = hapi.server({
 server.ext('onPreStart', () => {
   server.listener.setTimeout(config.get('requestTimeoutMs'))
 })
+await server.register(Inert)
 
-const routes = [].concat(healthyRoute, healthRoute)
+const routes = [].concat(healthyRoute, healthRoute, {
+  method: 'GET',
+  path: '/react',
+  handler: (request, h) => {
+    return h.file('app/react/index.html')
+  }
+})
+
 server.route(routes)
 
 server.ext({
