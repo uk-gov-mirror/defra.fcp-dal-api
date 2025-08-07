@@ -2,38 +2,268 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
+    <title>React + GraphQL (fetch) Grid</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>React App</title>
-    <!-- Tailwind CSS via CDN -->
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- React and ReactDOM via CDN -->
-    <script src="https://cdn.jsdelivr.net/npm/react@18.2.0/umd/react.production.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/react-dom@18.2.0/umd/react-dom.production.min.js"></script>
-    <!-- Babel for JSX transformation -->
-    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone@7.20.6/babel.min.js"></script>
+    <!-- React and ReactDOM -->
+    <script src="https://cdn.jsdelivr.net/npm/react@18/umd/react.production.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- Babel for JSX -->
+    <script src="https://cdn.jsdelivr.net/npm/@babel/standalone/babel.min.js"></script>
   </head>
   <body>
-    <div id="root" class="min-h-screen bg-gray-100 flex items-center justify-center"></div>
+    <div id="root" class="min-h-screen bg-white"></div>
+
     <script type="text/babel">
-      // Simple React component
-      function App() {
+      const GET_CUSTOMERS_QUERY = `#graphql
+        query BusinessCustomers($sbi: ID!) {
+          business(sbi: $sbi) {
+            sbi
+            customers {
+              crn
+              firstName
+              lastName
+            }
+          }
+        }
+      `
+
+      const GET_CUSTOMER_PERMISSIONS_QUERY = `#graphql
+        query BusinessCustomerPermissions($sbi: ID!, $crn: ID!) {
+          business(sbi: $sbi) {
+            customer(crn: $crn) {
+              role
+              permissionGroups {
+                id
+                level
+                functions
+              }
+            }
+          }
+          customer(crn: $crn) {
+            info {
+              name {
+                title
+                first
+                middle
+                last
+              }
+              dateOfBirth
+            }
+          }
+        }
+      `
+
+      function CustomerTable({ onSelectPerson, selectedPerson }) {
+        const [loading, setLoading] = React.useState(true)
+        const [error, setError] = React.useState(null)
+        const [people, setPeople] = React.useState([])
+
+        React.useEffect(() => {
+          fetch('https://lhm885cr-3000.uks1.devtunnels.ms/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              query: GET_CUSTOMERS_QUERY,
+              variables: { sbi: '107591843' }
+            })
+          })
+            .then((res) => res.json())
+            .then((data) => {
+              const customers = data?.data?.business?.customers || []
+              setPeople(customers)
+              setLoading(false)
+            })
+            .catch((err) => {
+              setError(err.message)
+              setLoading(false)
+            })
+        }, [])
+
+        if (loading) return <p className="p-4 text-sm text-gray-500">Loading...</p>
+        if (error) return <p className="p-4 text-sm text-red-500">Error: {error}</p>
+
         return (
-          <div className="text-center">
-            <h1 className="text-4xl font-bold text-blue-600 mb-4">Welcome to the React App</h1>
-            <p className="text-lg text-gray-700">
-              This is a simple React app served by Hapi at /react
-            </p>
-            <button
-              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
-              onClick={() => alert('Button clicked!')}
-            >
-              Click Me
-            </button>
+          <div className="mt-8 flow-root">
+            <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+              <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                {/* Header */}
+                <div className="grid grid-cols-3 divide-x divide-gray-200 border-b border-gray-300">
+                  <div className="py-3.5 pr-4 pl-4 text-left text-sm font-semibold text-gray-900 sm:pl-0">
+                    CRN
+                  </div>
+                  <div className="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    First Name
+                  </div>
+                  <div className="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    Last Name
+                  </div>
+                </div>
+                {/* Rows */}
+                <div className="divide-y divide-gray-200 bg-white">
+                  {people.map((person) => (
+                    <div
+                      key={person.crn}
+                      className={`grid grid-cols-3 divide-x divide-gray-200 cursor-pointer hover:bg-gray-50 ${
+                        selectedPerson && selectedPerson.crn === person.crn ? 'bg-gray-100' : ''
+                      }`}
+                      onClick={() => onSelectPerson(person)}
+                    >
+                      <div className="py-4 pr-4 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-0">
+                        {person.crn}
+                      </div>
+                      <div className="p-4 text-sm whitespace-nowrap text-gray-500 truncate">
+                        {person.firstName}
+                      </div>
+                      <div className="p-4 text-sm whitespace-nowrap text-gray-500">
+                        {person.lastName}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         )
       }
 
-      // Render the React app
+      function PermissionsGrid({ permissionsData, loading }) {
+        if (loading) {
+          return <p className="mt-4 text-sm text-gray-500">Loading permissions...</p>
+        }
+
+        if (!permissionsData || permissionsData.length === 0) {
+          return <p className="mt-4 text-sm text-gray-500">No permissions data available.</p>
+        }
+
+        return (
+          <div className="mt-8 flow-root">
+            <div className="-mx-4 -my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
+              <div className="inline-block min-w-full py-2 align-middle sm:px-6 lg:px-8">
+                {/* Header */}
+                <div className="grid grid-cols-3 divide-x divide-gray-200 border-b border-gray-300">
+                  <div className="py-3.5 pr-4 pl-4 text-left text-sm font-semibold text-gray-900 sm:pl-0">
+                    Permission Group
+                  </div>
+                  <div className="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    Level
+                  </div>
+                  <div className="px-4 py-3.5 text-left text-sm font-semibold text-gray-900">
+                    Functions
+                  </div>
+                </div>
+                {/* Rows */}
+                <div className="divide-y divide-gray-200 bg-white">
+                  {permissionsData.map((item) => (
+                    <div key={item.id} className="grid grid-cols-3 divide-x divide-gray-200">
+                      <div className="py-4 pr-4 pl-4 text-sm font-medium whitespace-nowrap text-gray-900 sm:pl-0">
+                        {item.id}
+                      </div>
+                      <div className="p-4 text-sm whitespace-nowrap text-gray-500">
+                        {item.level}
+                      </div>
+                      <div className="p-4 text-sm whitespace-nowrap text-gray-500 truncate">
+                        {item.functions.join(', ')}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      function App() {
+        const [selectedPerson, setSelectedPerson] = React.useState(null)
+        const [permissionsData, setPermissionsData] = React.useState([])
+        const [dateOfBirth, setDateOfBirth] = React.useState()
+        const [fullName, setFullName] = React.useState()
+        const [loadingPermissions, setLoadingPermissions] = React.useState(false)
+        const [permissionsError, setPermissionsError] = React.useState(null)
+
+        React.useEffect(() => {
+          if (!selectedPerson) {
+            setPermissionsData([])
+            return
+          }
+
+          setLoadingPermissions(true)
+          setPermissionsError(null)
+
+          fetch('https://lhm885cr-3000.uks1.devtunnels.ms/graphql', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({
+              query: GET_CUSTOMER_PERMISSIONS_QUERY,
+              variables: { sbi: '107591843', crn: selectedPerson.crn }
+            })
+          })
+            .then((res) => res.json())
+            .then((data) => {
+              setPermissionsData(data?.data?.business?.customer?.permissionGroups || [])
+              setDateOfBirth(data?.data?.customer?.info?.dateOfBirth || null)
+              setFullName(
+                [
+                  data?.data?.customer?.info?.name?.title,
+                  data?.data?.customer?.info?.name?.first,
+                  data?.data?.customer?.info?.name?.middle,
+                  data?.data?.customer?.info?.name?.last
+                ].join(' ')
+              )
+              setLoadingPermissions(false)
+            })
+            .catch((err) => {
+              setPermissionsError(err.message)
+              setLoadingPermissions(false)
+            })
+        }, [selectedPerson])
+
+        return (
+          <div className="grid grid-cols-3 h-screen">
+            <div className="col-span-1 px-4 sm:px-6 lg:px-8 border-r border-gray-300 overflow-y-auto">
+              <CustomerTable onSelectPerson={setSelectedPerson} selectedPerson={selectedPerson} />
+            </div>
+            <div className="col-span-2 px-4 sm:px-6 lg:px-8 overflow-y-auto">
+              <div className="mt-8">
+                <h2 className="text-lg font-semibold text-gray-900">Details</h2>
+                {selectedPerson ? (
+                  <dl className="mt-4 space-y-4">
+                    <div className="flex items-center">
+                      <dt className="w-1/4 text-sm font-medium text-gray-900">CRN</dt>
+                      <dd className="w-3/4 text-sm text-gray-500">{selectedPerson.crn}</dd>
+                    </div>
+                    <div className="flex items-center">
+                      <dt className="w-1/4 text-sm font-medium text-gray-900">Full Name</dt>
+                      <dd className="w-3/4 text-sm text-gray-500">{fullName}</dd>
+                    </div>
+                    <div className="flex items-center">
+                      <dt className="w-1/4 text-sm font-medium text-gray-900">Date of Birth</dt>
+                      <dd className="w-3/4 text-sm text-gray-500">{dateOfBirth}</dd>
+                    </div>
+                  </dl>
+                ) : (
+                  <p className="mt-4 text-sm text-gray-500">Select a row to view details</p>
+                )}
+
+                {permissionsError && (
+                  <p className="mt-4 text-sm text-red-500">
+                    Error loading permissions: {permissionsError}
+                  </p>
+                )}
+
+                <PermissionsGrid permissionsData={permissionsData} loading={loadingPermissions} />
+              </div>
+            </div>
+          </div>
+        )
+      }
+
       const root = ReactDOM.createRoot(document.getElementById('root'))
       root.render(<App />)
     </script>
