@@ -8,8 +8,8 @@ import { HttpError } from '../../errors/graphql.js'
 import { RURALPAYMENTS_API_REQUEST_001 } from '../../logger/codes.js'
 import { sendMetric } from '../../logger/sendMetric.js'
 
-export const customFetch = async (url, options) => {
-  const kitsURL = new URL(appConfig.get('kits.gatewayUrl'))
+export const customFetch = (gatewayUrl) => async (url, options) => {
+  const kitsURL = new URL(gatewayUrl)
 
   const requestTls = {
     host: kitsURL.hostname,
@@ -47,14 +47,14 @@ export const customFetch = async (url, options) => {
   })
 }
 export class RuralPayments extends RESTDataSource {
-  baseURL = appConfig.get('kits.gatewayUrl')
   request = null
 
-  constructor(config, request) {
+  constructor(config, { request, gatewayUrl }) {
     super(config)
 
     this.request = request
-    this.httpCache.httpFetch = customFetch
+    this.httpCache.httpFetch = customFetch(gatewayUrl)
+    this.baseURL = gatewayUrl
   }
 
   didEncounterError(error, request, url) {

@@ -1,0 +1,7 @@
+extend type Query {
+  external: External
+}
+
+type External {
+  customer: Customer
+}
