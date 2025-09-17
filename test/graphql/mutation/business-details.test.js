@@ -1,4 +1,5 @@
 config.set('auth.disabled', false)
+import { GraphQLError } from 'graphql'
 import jwt from 'jsonwebtoken'
 import nock from 'nock'
 import { config } from '../../../app/config.js'
@@ -356,6 +357,113 @@ describe('business', () => {
     })
   })
 
+  test('update business address - invalid address error', async () => {
+    const input = {
+      sbi: 'sbi',
+      address: {
+        buildingName: 'new buildingName',
+        buildingNumberRange: 'new buildingNumberRange',
+        city: 'new city',
+        country: 'new country',
+        county: 'new county',
+        dependentLocality: 'new dependentLocality',
+        doubleDependentLocality: 'new doubleDependentLocality',
+        flatName: 'new flatName',
+        line2: 'new line2',
+        line3: 'new line3',
+        line4: 'new line4',
+        line5: 'new line5',
+        pafOrganisationName: 'new pafOrganisationName',
+        postalCode: 'new postalCode',
+        street: 'new street'
+      },
+      correspondenceAddress: {
+        buildingName: 'new buildingName',
+        buildingNumberRange: 'new buildingNumberRange',
+        city: 'new city',
+        country: 'new country',
+        county: 'new county',
+        dependentLocality: 'new dependentLocality',
+        doubleDependentLocality: 'new doubleDependentLocality',
+        flatName: 'new flatName',
+        line1: 'new line1',
+        line2: 'new line2',
+        line3: 'new line3',
+        line4: 'new line4',
+        line5: 'new line5',
+        pafOrganisationName: 'new pafOrganisationName',
+        postalCode: 'new postalCode',
+        street: 'new street',
+        uprn: 'new uprn'
+      },
+      isCorrespondenceAsBusinessAddress: true
+    }
+
+    const query = `
+      mutation UpdateBusinessAddress($input: UpdateBusinessAddressInput!) {
+        updateBusinessAddress(input: $input) {
+          business {
+            info {
+              correspondenceAddress {
+                buildingName
+                buildingNumberRange
+                city
+                country
+                county
+                dependentLocality
+                doubleDependentLocality
+                flatName
+                line1
+                line2
+                line3
+                line4
+                line5
+                pafOrganisationName
+                postalCode
+                street
+                uprn
+              }
+              address {
+                buildingName
+                buildingNumberRange
+                city
+                country
+                county
+                dependentLocality
+                doubleDependentLocality
+                flatName
+                line1
+                line2
+                line3
+                line4
+                line5
+                pafOrganisationName
+                postalCode
+                street
+                uprn
+              }
+              isCorrespondenceAsBusinessAddress
+            }
+          }
+          success
+        }
+      }
+    `
+    const result = await makeTestQuery(query, true, {
+      input
+    })
+
+    expect(result).toEqual({
+      errors: [
+        new GraphQLError(
+          "Either 'uprn' must be provided, or all of 'address1', 'city', 'postalCode', and 'country' must be provided."
+        )
+      ],
+      data: {
+        updateBusinessAddress: null
+      }
+    })
+  })
   test('update business phone', async () => {
     const input = {
       sbi: 'sbi',

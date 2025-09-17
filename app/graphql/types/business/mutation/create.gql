@@ -31,7 +31,7 @@ input CreateBusinessInput {
   """
   Address of the business.
   """
-  address: AddressInput
+  address: AddressInput!
 
   """
   Correspondence address of the business.

@@ -71,7 +71,9 @@ input AddressInput {
   country: String
 
   """
-  UPRN of the address
+  UPRN of the address.
+  Either this field or address1, city, postalCode, and country must be provided for a valid business address.
+  Customer addresses will accept any set of fields.
   """
   uprn: String
 

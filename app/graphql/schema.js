@@ -8,6 +8,7 @@ import { authDirectiveTransformer } from '../auth/authenticate.js'
 import { config } from '../config.js'
 import { excludeFromListTransformer } from './directives/excludeFromListTransformer.js'
 import { onDirectiveTransformer } from './directives/onDirectiveTransformer.js'
+import { validateAddressDirectiveTransformer } from './directives/validateAddress.js'
 
 import * as BusinessLand from './resolvers/business/business-land.js'
 import * as Business from './resolvers/business/business.js'
@@ -49,6 +50,8 @@ export async function createSchema() {
       `DISABLE_AUTH:${config.get('auth.disabled')} ENVIRONMENT:${config.get('cdp.env')}`
     )
   }
+
+  schema = validateAddressDirectiveTransformer(schema)
 
   schema = excludeFromListTransformer(schema)
 

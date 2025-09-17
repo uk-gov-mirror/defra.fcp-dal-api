@@ -396,8 +396,8 @@ input CreateBusinessInput {
   vat: String
   traderNumber: String
   vendorNumber: String
-  address: AddressInput
-  correspondenceAddress: AddressInput
+  address: AddressInput @validateAddress
+  correspondenceAddress: AddressInput @validateAddress
   isCorrespondenceAsBusinessAddress: Boolean
   email: EmailInput
   correspondenceEmail: EmailInput
@@ -435,8 +435,8 @@ input UpdateBusinessEmailInput {
 
 input UpdateBusinessAddressInput {
   sbi: ID!
-  address: AddressInput
-  correspondenceAddress: AddressInput
+  address: AddressInput @validateAddress
+  correspondenceAddress: AddressInput @validateAddress
   isCorrespondenceAsBusinessAddress: Boolean
 }
 
