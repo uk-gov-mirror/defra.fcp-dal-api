@@ -1,6 +1,6 @@
 import { MapperKind, mapSchema } from '@graphql-tools/utils'
 import { defaultFieldResolver } from 'graphql'
-import { hasDirective, validateRecursivelyForInput } from './helpers.js'
+import { validateRecursivelyForInput } from './helpers.js'
 
 export function validateAddressDirectiveTransformer(schema) {
   return mapSchema(schema, {
@@ -9,15 +9,12 @@ export function validateAddressDirectiveTransformer(schema) {
       fieldConfig.resolve = async (source, args, context, info) => {
         const argDefs = fieldConfig.args || {}
         for (const [argName, argDef] of Object.entries(argDefs)) {
-          if (hasDirective(schema, argDef, 'excludeFromValidation')) continue
-          const value = args[argName]
-          if (value == null) continue
           validateRecursivelyForInput(
             'AddressInput',
             validateAddressInput,
             schema,
             argDef.type,
-            value,
+            args[argName],
             argDef
           )
         }
