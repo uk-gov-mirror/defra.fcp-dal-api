@@ -1,4 +1,5 @@
 config.set('auth.disabled', false)
+import { GraphQLError } from 'graphql'
 import nock from 'nock'
 import { config } from '../../../app/config.js'
 import { transformBusinessDetailsToOrgDetailsCreate } from '../../../app/transformers/rural-payments/business.js'
@@ -160,8 +161,6 @@ describe('business', () => {
     `
     const result = await makeTestQuery(query, true, { input })
 
-    expect(nock.isDone()).toBe(true)
-
     expect(result).toEqual({
       data: {
         createBusiness: {
@@ -247,6 +246,48 @@ describe('business', () => {
             }
           }
         }
+      }
+    })
+
+    expect(nock.isDone()).toBe(true)
+  })
+
+  test('create a business - invalid address', async () => {
+    const input = {
+      crn: 'crn',
+      name: 'Acme Farms Ltd',
+      address: {
+        line2: 'Rural Area',
+        city: 'Farmville',
+        postalCode: 'FV1 2AB',
+        country: 'UK'
+      },
+      typeCode: 2
+    }
+
+    const orgDetails = transformBusinessDetailsToOrgDetailsCreate(input)
+
+    v1.post('/organisation/create/personId').reply(200, {
+      _data: orgDetails
+    })
+
+    const query = `
+      mutation CreateBusiness($input: CreateBusinessInput!) {
+        createBusiness(input: $input) {
+          success
+        }
+      }
+    `
+    const result = await makeTestQuery(query, true, { input })
+
+    expect(result).toEqual({
+      errors: [
+        new GraphQLError(
+          "Either 'uprn' must be provided, or all of 'address1', 'city', 'postalCode', and 'country' must be provided."
+        )
+      ],
+      data: {
+        createBusiness: null
       }
     })
   })

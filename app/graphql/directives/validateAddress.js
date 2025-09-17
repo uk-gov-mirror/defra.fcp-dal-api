@@ -71,8 +71,8 @@ export function validateAddressDirectiveTransformer(schema) {
 export function validateAddressInput(input) {
   if (!input) return
 
-  const { uprn, address1, city, postalCode, country } = input
-  const hasFullAddress = address1 && city && postalCode && country
+  const { uprn, line1, city, postalCode, country } = input
+  const hasFullAddress = line1 && city && postalCode && country
 
   if (!uprn && !hasFullAddress) {
     throw new Error(
