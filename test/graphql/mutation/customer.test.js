@@ -105,7 +105,9 @@ describe('customer mutations', () => {
   test('updateCustomerAddress', async () => {
     setupNock({
       address: {
-        address1: 'newLine1',
+        // Use a normally invalid address to check this is not validated.
+        // Since customer endpoints allow seemingly any address.
+        address1: null,
         address2: 'newLine2',
         address3: 'newLine3',
         address4: 'newLine4',
@@ -119,7 +121,7 @@ describe('customer mutations', () => {
         county: 'newCounty',
         postalCode: 'newPostalCode',
         country: 'newCountry',
-        uprn: 'newUprn',
+        uprn: null,
         dependentLocality: 'newDependentLocality',
         doubleDependentLocality: 'newDoubleDependentLocality'
       }
@@ -139,7 +141,7 @@ describe('customer mutations', () => {
               dependentLocality: "newDependentLocality"
               doubleDependentLocality: "newDoubleDependentLocality"
               flatName: "newFlatName"
-              line1: "newLine1"
+              line1: null
               line2: "newLine2"
               line3: "newLine3"
               line4: "newLine4"
@@ -147,7 +149,7 @@ describe('customer mutations', () => {
               pafOrganisationName: "newPafOrganisationName"
               postalCode: "newPostalCode"
               street: "newStreet"
-              uprn: "newUprn"
+              uprn: null
             }
           }
         ) {
@@ -187,7 +189,7 @@ describe('customer mutations', () => {
             info: {
               address: {
                 pafOrganisationName: 'newPafOrganisationName',
-                line1: 'newLine1',
+                line1: null,
                 line2: 'newLine2',
                 line3: 'newLine3',
                 line4: 'newLine4',
@@ -200,7 +202,7 @@ describe('customer mutations', () => {
                 county: 'newCounty',
                 postalCode: 'newPostalCode',
                 country: 'newCountry',
-                uprn: 'newUprn',
+                uprn: null,
                 dependentLocality: 'newDependentLocality',
                 doubleDependentLocality: 'newDoubleDependentLocality'
               }

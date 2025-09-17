@@ -22,7 +22,7 @@ input UpdateCustomerAddressInput {
   """
   Address of the customer.
   """
-  address: AddressInput!
+  address: AddressInput! @excludeFromValidation
 }
 
 input UpdateCustomerDateOfBirthInput {

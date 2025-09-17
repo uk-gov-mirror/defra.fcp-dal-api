@@ -369,13 +369,16 @@ describe('business', () => {
         dependentLocality: 'new dependentLocality',
         doubleDependentLocality: 'new doubleDependentLocality',
         flatName: 'new flatName',
+        // The null fields are the required fields, must be truthy to pass validation.
+        line1: null,
         line2: 'new line2',
         line3: 'new line3',
         line4: 'new line4',
         line5: 'new line5',
         pafOrganisationName: 'new pafOrganisationName',
         postalCode: 'new postalCode',
-        street: 'new street'
+        street: 'new street',
+        uprn: null
       },
       correspondenceAddress: {
         buildingName: 'new buildingName',
