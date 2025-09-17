@@ -76,7 +76,7 @@ export function validateAddressInput(input) {
 
   if (!uprn && !hasFullAddress) {
     throw new Error(
-      "Either 'uprn' must be provided, or all of 'address1', 'city', 'postalCode', and 'country' must be provided."
+      "Either 'uprn' must be provided, or all of 'line1', 'city', 'postalCode', and 'country' must be provided."
     )
   }
 }
