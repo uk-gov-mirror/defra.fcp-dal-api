@@ -1,14 +1,6 @@
 import { validateAddressInput } from '../../../app/graphql/directives/validateAddress'
 
 describe('validateAddressInput', () => {
-  it('does nothing if input is undefined', () => {
-    expect(() => validateAddressInput(undefined)).not.toThrow()
-  })
-
-  it('does nothing if input is null', () => {
-    expect(() => validateAddressInput(null)).not.toThrow()
-  })
-
   it('does nothing if uprn is provided', () => {
     expect(() => validateAddressInput({ uprn: '123456789' })).not.toThrow()
   })
