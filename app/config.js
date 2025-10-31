@@ -179,7 +179,7 @@ export const config = convict({
         format: String,
         env: 'KITS_INT_DEV_OVERRIDE_EMAIL',
         nullable: true,
-        default: ''
+        default: null
       }
     },
     external: {
