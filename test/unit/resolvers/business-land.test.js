@@ -59,7 +59,7 @@ const dataSources = {
           campaign: 1,
           lu_code: 'mockCode',
           landuse: 'mockLanduse',
-          area: 0.1,
+          area: 1000,
           length: 0.1
         }
       ]
