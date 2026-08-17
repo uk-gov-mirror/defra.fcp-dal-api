@@ -9,7 +9,8 @@ describe('Customer Query Resolver', () => {
     mockDataSources = {
       ruralPaymentsCustomer: {
         getPersonIdByCRN: jest.fn(),
-        personSearch: jest.fn()
+        personSearch: jest.fn(),
+        validateEmail: jest.fn()
       },
       mongoCustomer: {
         findPersonIdByCRN: jest.fn(),
@@ -82,5 +83,22 @@ describe('Customer Query Resolver', () => {
       line1: 'line 1',
       postalCode: 'AB12 3CD'
     })
+  })
+
+  it('validateCustomerEmail should return emailDuplicated from the data source', async () => {
+    mockDataSources.ruralPaymentsCustomer.validateEmail.mockResolvedValue({
+      emailDuplicated: true
+    })
+
+    const result = await Query.validateCustomerEmail(
+      null,
+      { email: 'test@example.com' },
+      { dataSources: mockDataSources, logger: mockLogger }
+    )
+
+    expect(mockDataSources.ruralPaymentsCustomer.validateEmail).toHaveBeenCalledWith(
+      'test@example.com'
+    )
+    expect(result).toEqual({ emailDuplicated: true })
   })
 })

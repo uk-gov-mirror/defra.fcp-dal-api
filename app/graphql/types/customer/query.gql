@@ -14,4 +14,10 @@ extend type Query {
     searchType: CustomerSearchFieldType!
     pagination: Pagination
   ): CustomerSearchResponse @auth(requires: [CONSOLIDATED_VIEW, SINGLE_FRONT_DOOR, SFI_REFORM])
+
+  """
+  Check whether an email address is already in use by another customer.
+  """
+  validateCustomerEmail(email: String!): ValidateCustomerEmailResponse
+    @auth(requires: [SINGLE_FRONT_DOOR])
 }

@@ -20,5 +20,9 @@ export const Query = {
       results: data.map(transformPersonSearchResult),
       pageInfo: transformPageInfo(page)
     }
+  },
+
+  async validateCustomerEmail(__, { email }, { dataSources }) {
+    return dataSources.ruralPaymentsCustomer.validateEmail(email)
   }
 }
