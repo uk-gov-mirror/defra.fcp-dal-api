@@ -22,7 +22,8 @@ export const Query = {
     }
   },
 
-  async validateCustomerEmail(__, { email }, { dataSources }) {
-    return dataSources.ruralPaymentsCustomer.validateEmail(email)
+  async isCustomerEmailAvailable(__, { email }, { dataSources }) {
+    const { emailDuplicated } = await dataSources.ruralPaymentsCustomer.validateEmail(email)
+    return !emailDuplicated
   }
 }

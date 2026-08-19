@@ -189,13 +189,3 @@ type CustomerBusiness {
   """
   permissionGroups: [ActivePermissionGroup] @excludeFromList
 }
-
-"""
-The result of validating an email address.
-"""
-type ValidateCustomerEmailResponse {
-  """
-  Whether the email address is already in use by another customer.
-  """
-  emailDuplicated: Boolean!
-}

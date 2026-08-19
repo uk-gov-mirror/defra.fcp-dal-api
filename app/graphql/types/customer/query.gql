@@ -16,8 +16,7 @@ extend type Query {
   ): CustomerSearchResponse @auth(requires: [CONSOLIDATED_VIEW, SINGLE_FRONT_DOOR, SFI_REFORM])
 
   """
-  Check whether an email address is already in use by another customer.
+  Check whether an email address is available (i.e. not already in use by another customer).
   """
-  validateCustomerEmail(email: String!): ValidateCustomerEmailResponse
-    @auth(requires: [SINGLE_FRONT_DOOR])
+  isCustomerEmailAvailable(email: String!): Boolean! @auth(requires: [SINGLE_FRONT_DOOR])
 }
