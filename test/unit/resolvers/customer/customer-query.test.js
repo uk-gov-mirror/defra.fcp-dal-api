@@ -85,12 +85,12 @@ describe('Customer Query Resolver', () => {
     })
   })
 
-  it('isCustomerEmailAvailable should return false when the email is duplicated', async () => {
+  it('isCustomerEmailRegistered should return true when the email is duplicated', async () => {
     mockDataSources.ruralPaymentsCustomer.validateEmail.mockResolvedValue({
       emailDuplicated: true
     })
 
-    const result = await Query.isCustomerEmailAvailable(
+    const result = await Query.isCustomerEmailRegistered(
       null,
       { email: 'test@example.com' },
       { dataSources: mockDataSources, logger: mockLogger }
@@ -99,20 +99,20 @@ describe('Customer Query Resolver', () => {
     expect(mockDataSources.ruralPaymentsCustomer.validateEmail).toHaveBeenCalledWith(
       'test@example.com'
     )
-    expect(result).toBe(false)
+    expect(result).toBe(true)
   })
 
-  it('isCustomerEmailAvailable should return true when the email is not duplicated', async () => {
+  it('isCustomerEmailRegistered should return false when the email is not duplicated', async () => {
     mockDataSources.ruralPaymentsCustomer.validateEmail.mockResolvedValue({
       emailDuplicated: false
     })
 
-    const result = await Query.isCustomerEmailAvailable(
+    const result = await Query.isCustomerEmailRegistered(
       null,
       { email: 'test@example.com' },
       { dataSources: mockDataSources, logger: mockLogger }
     )
 
-    expect(result).toBe(true)
+    expect(result).toBe(false)
   })
 })
