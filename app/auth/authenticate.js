@@ -116,9 +116,19 @@ export function getRequestingGroup(groups) {
   return groups?.find((group) => Object.values(authGroups).includes(group))
 }
 
+/**
+ * ADMIN group membership bypasses both the @auth group check and the serviceAccountPermitted gate.
+ */
+export function isAdminCaller(requesterGroups) {
+  return requesterGroups.includes(authGroups.ADMIN)
+}
+
+/**
+ * Checks that the requester's groups satisfy the given @auth allow-list.
+ * @throws {Unauthorized} if access is not granted
+ */
 export function checkAuthGroup(requesterGroups, allowedGroups) {
-  const isAdmin = requesterGroups.includes(authGroups.ADMIN)
-  if (isAdmin) {
+  if (isAdminCaller(requesterGroups)) {
     return
   } else {
     const hasAccess = allowedGroups.some((group) => {
@@ -128,6 +138,17 @@ export function checkAuthGroup(requesterGroups, allowedGroups) {
     if (!hasAccess) {
       throw new Unauthorized('Authorization failed, you are not in the correct AD groups')
     }
+  }
+}
+
+/**
+ * A field guarded by @auth is only usable by a service-account caller if it also sets
+ * serviceAccountPermitted: true (or the caller bypasses group checks entirely via ADMIN
+ * membership).
+ */
+export function checkServiceAccountAccess(isServiceAccount, serviceAccountPermitted, isAdmin) {
+  if (isServiceAccount && !serviceAccountPermitted && !isAdmin) {
+    throw new Unauthorized('Authorization failed, this field is not available to service accounts')
   }
 }
 
@@ -145,10 +166,18 @@ export function authDirectiveTransformer(schema) {
     [MapperKind.OBJECT_FIELD](fieldConfig, _fieldName, typeName) {
       const authDirective =
         getDirective(schema, fieldConfig, directiveName)?.[0] ?? typeDirectiveArgumentMaps[typeName]
+      const serviceAccountPermitted = authDirective?.serviceAccountPermitted ?? false
       const { resolve = defaultFieldResolver } = fieldConfig
+
       if (authDirective) {
         fieldConfig.resolve = function (source, args, context, info) {
-          checkAuthGroup(context.auth.groups || [], authDirective.requires)
+          const requesterGroups = context.auth.groups || []
+          checkAuthGroup(requesterGroups, authDirective.requires)
+          checkServiceAccountAccess(
+            !!context.authContext?.serviceAccount,
+            serviceAccountPermitted,
+            isAdminCaller(requesterGroups)
+          )
           return resolve(source, args, context, info)
         }
       }
