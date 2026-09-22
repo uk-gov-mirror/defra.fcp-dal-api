@@ -108,7 +108,6 @@ export function registerConnectTiming() {
     return
   }
   externalGatewayOrigin = originFor(new URL(appConfig.get('kits.external.gatewayUrl')))
-  logger.info(`externalGatewayOrigin=${externalGatewayOrigin}`)
   diagnosticsChannel.subscribe('undici:client:beforeConnect', onBeforeConnect)
   diagnosticsChannel.subscribe('undici:client:connected', onConnected)
   diagnosticsChannel.subscribe('undici:client:connectError', onConnectError)

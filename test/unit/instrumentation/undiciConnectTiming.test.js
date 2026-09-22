@@ -46,7 +46,9 @@ describe('undiciConnectTiming', () => {
     beforeConnectChannel.publish({ connectParams })
     connectedChannel.publish({ connectParams })
 
-    // expect(loggerInfoSpy).not.toHaveBeenCalled()
+    expect(loggerInfoSpy).toHaveBeenCalledWith(
+      'Not registering for diagnostics: subs false, enabled false'
+    )
   })
 
   test('logs requestTimeMs on connection established to the external gateway', () => {
@@ -155,7 +157,7 @@ describe('undiciConnectTiming', () => {
     beforeConnectChannel.publish({ connectParams })
     connectedChannel.publish({ connectParams })
 
-    // expect(loggerInfoSpy).not.toHaveBeenCalled()
+    expect(loggerInfoSpy).not.toHaveBeenCalled()
   })
 
   test('ignores connections to a different origin, on connectError', () => {
@@ -181,7 +183,7 @@ describe('undiciConnectTiming', () => {
     beforeConnectChannel.publish({ connectParams: internal })
     connectedChannel.publish({ connectParams: internal })
 
-    // expect(loggerInfoSpy).toHaveBeenCalledTimes(1)
+    expect(loggerInfoSpy).toHaveBeenCalledTimes(1)
     expect(loggerInfoSpy).toHaveBeenCalledWith(
       expect.stringContaining('host=kits.example.com:8443'),
       expect.anything()
@@ -196,7 +198,7 @@ describe('undiciConnectTiming', () => {
       connectParams: { hostname: 'kits.example.com', port: '8443', protocol: 'https:' }
     })
 
-    // expect(loggerInfoSpy).not.toHaveBeenCalled()
+    expect(loggerInfoSpy).not.toHaveBeenCalled()
   })
 
   test('correlates beforeConnect and connected by content, not object identity (matches real undici, which builds a fresh connectParams object literal per publish call)', () => {
@@ -262,7 +264,7 @@ describe('undiciConnectTiming', () => {
     beforeConnectChannel.publish({ connectParams })
     connectedChannel.publish({ connectParams })
 
-    // expect(loggerInfoSpy).toHaveBeenCalledTimes(1)
+    expect(loggerInfoSpy).toHaveBeenCalledTimes(2)
   })
 
   test('unregisterConnectTiming detaches the subscribers', () => {
@@ -274,6 +276,6 @@ describe('undiciConnectTiming', () => {
     beforeConnectChannel.publish({ connectParams })
     connectedChannel.publish({ connectParams })
 
-    // expect(loggerInfoSpy).not.toHaveBeenCalled()
+    expect(loggerInfoSpy).not.toHaveBeenCalled()
   })
 })
