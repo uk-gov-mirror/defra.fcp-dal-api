@@ -3,9 +3,11 @@ import tls from 'node:tls'
 
 import { secureContext } from '@defra/hapi-secure-context'
 
+import { config as appConfig } from './config.js'
 import { context } from './graphql/context.js'
 import { apolloServer } from './graphql/server.js'
 import { registerConnectTiming } from './instrumentation/undiciConnectTiming.js'
+import { registerResponseTiming } from './instrumentation/undiciResponseTiming.js'
 import { DAL_UNHANDLED_ERROR_001 } from './logger/codes.js'
 import { logger } from './logger/logger.js'
 import { mongoClient } from './mongo.js'
@@ -50,6 +52,9 @@ process.on('uncaughtException', async (error) => {
   await abort()
 })
 
-registerConnectTiming()
+if (appConfig.get('kits.external.connectTimingEnabled')) {
+  registerConnectTiming()
+  registerResponseTiming()
+}
 
 await init()

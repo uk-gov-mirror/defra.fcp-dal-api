@@ -197,10 +197,10 @@ export const config = convict({
       },
       connectTimingEnabled: {
         doc:
-          'Enable diagnostics_channel-based instrumentation that measures undici TCP+TLS/mTLS ' +
-          'connection-establishment time for the KITS external gateway, separate from ' +
-          'request/response time. Intended for use only while actively investigating latency, ' +
-          'not left on permanently.',
+          'Enable diagnostics_channel-based instrumentation for the KITS external gateway: ' +
+          'undici TCP+TLS/mTLS connection-establishment time, and separately, response ' +
+          'headers-to-fully-received-body time. Intended for use only while actively ' +
+          'investigating latency, not left on permanently.',
         format: Boolean,
         default: false,
         env: 'KITS_EXTERNAL_CONNECT_TIMING_ENABLED'
