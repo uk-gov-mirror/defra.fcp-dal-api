@@ -38,10 +38,7 @@ server.ext({
 server.ext({
   type: 'onRequest',
   method: function (request, h) {
-    request.transactionId =
-      request.headers['x-ms-client-request-id'] ||
-      request.headers['x-ms-client-tracking-id'] ||
-      uuidv4()
+    // FCPDAL-222: capture the CDP platform trace ID (x-cdp-request-id) so any consumer can be traced.
     request.traceId = request.headers['x-cdp-request-id'] || uuidv4()
 
     logger.debug('FCP - Access log', {
@@ -57,7 +54,6 @@ server.ext({
         remoteAddress: request.info.remoteAddress
       },
       code: DAL_APPLICATION_REQUEST_001,
-      transactionId: request.transactionId,
       traceId: request.traceId
     })
 
@@ -83,7 +79,6 @@ server.events.on('response', function (request) {
     logger.info('FCP - Access log', {
       type: 'http',
       code: DAL_APPLICATION_REQUEST_001,
-      transactionId: request.transactionId,
       traceId: request.traceId,
       requestTimeMs,
       request: {
@@ -110,7 +105,6 @@ server.events.on('response', function (request) {
       body: request.response.source
     },
     requestTimeMs,
-    transactionId: request.transactionId,
     traceId: request.traceId,
     code: DAL_APPLICATION_RESPONSE_001
   })

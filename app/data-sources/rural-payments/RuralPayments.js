@@ -86,6 +86,11 @@ export class RuralPayments extends BaseRESTDataSource {
       additionalHeaders.crn = this.defraIdContext.crn()
     }
 
+    // Propagate the CDP trace header so downstream services can correlate logs (FCPDAL-222)
+    if (headers['x-cdp-request-id']) {
+      additionalHeaders['x-cdp-request-id'] = headers['x-cdp-request-id']
+    }
+
     request.headers = {
       ...request.headers,
       ...additionalHeaders

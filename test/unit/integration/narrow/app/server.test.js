@@ -92,12 +92,11 @@ describe('Server config and startup', () => {
   })
 
   describe('Middleware behavior', () => {
-    test('onRequest adds transactionId and traceId', async () => {
+    test('onRequest adds traceId from x-cdp-request-id header', async () => {
       await server.inject({
         method: 'GET',
         url: '/healthy',
         headers: {
-          'x-ms-client-request-id': 'test-request-id',
           'x-cdp-request-id': 'test-trace-id'
         }
       })
@@ -105,7 +104,6 @@ describe('Server config and startup', () => {
       expect(mockLogger.logger.debug).toHaveBeenCalledWith(
         'FCP - Access log',
         expect.objectContaining({
-          transactionId: 'test-request-id',
           traceId: 'test-trace-id'
         })
       )
@@ -117,7 +115,6 @@ describe('Server config and startup', () => {
         'FCP - Response log',
         expect.objectContaining({
           code: expect.any(String),
-          transactionId: expect.any(String),
           traceId: expect.any(String)
         })
       )
@@ -162,7 +159,6 @@ describe('Server config and startup', () => {
       // response is never fully written (e.g. the client disconnects mid-response).
       const abortedRequest = {
         path: '/non-health',
-        transactionId: 'test-transaction-id',
         traceId: 'test-trace-id',
         method: 'get',
         params: {},
