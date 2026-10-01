@@ -1,5 +1,5 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { decodeBase64Config } from '../../../app/config.js'
+import { authGroups, authGroupServiceName, decodeBase64Config } from '../../../app/config.js'
 
 const existingEnvVars = process.env
 
@@ -256,6 +256,30 @@ describe('config', () => {
       cert: 'external-cert',
       key: 'external-key',
       ca: 'ca-cert'
+    })
+  })
+
+  describe('auth settings', () => {
+    it('should have authGroups config matching .env.test setup', () => {
+      expect(authGroups).toEqual({
+        ADMIN: 'some-ad-group-id',
+        CONSOLIDATED_VIEW: 'consolidated-view-ad-group-id',
+        LAND_GRANTS_API: 'land-grants-api-ad-group-id',
+        SFI_REFORM: 'sfi-reform-ad-group-id',
+        SINGLE_FRONT_DOOR: 'single-front-door-ad-group-id',
+        LAND_APP_TECH_SPIKES_API: 'land-app-tech-spikes-api-ad-group-id'
+      })
+    })
+
+    it('should have authGroupServiceName links back to the group ID', () => {
+      expect(authGroupServiceName).toEqual({
+        'some-ad-group-id': null,
+        'consolidated-view-ad-group-id': 'consolidated-view',
+        'land-grants-api-ad-group-id': 'land-grants-api',
+        'sfi-reform-ad-group-id': 'grants-platform',
+        'single-front-door-ad-group-id': 'single-front-door',
+        'land-app-tech-spikes-api-ad-group-id': 'land-app-tech-spikes-api'
+      })
     })
   })
 })
