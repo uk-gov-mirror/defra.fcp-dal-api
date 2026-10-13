@@ -2,7 +2,7 @@ import { getDirective, MapperKind, mapSchema } from '@graphql-tools/utils'
 import { Unit } from 'aws-embedded-metrics'
 import { defaultFieldResolver } from 'graphql'
 import { decodeProtectedHeader, jwtVerify } from 'jose'
-import { authGroups, authGroupServiceName, config } from '../config.js'
+import { authEntities, authEntityServiceName, config } from '../config.js'
 import { Unauthorized } from '../errors/graphql.js'
 import { DAL_REQUEST_AUTHENTICATION_001 } from '../logger/codes.js'
 import { logger } from '../logger/logger.js'
@@ -88,6 +88,7 @@ export async function getAuth(request, jwkDatasource) {
  * Returns the requesting service name based on the security groups.
  * Note: this will likely switch to using the appid see (https://eaflood.atlassian.net/browse/FCPDAL-490)
  * however using groups for now for consistency with our permission model.
+ *
  * @param {string[]} groups
  * @returns the calling service or null if service wasn't identified
  */
@@ -97,7 +98,8 @@ export function getRequestingService(groups) {
     return 'auth-disabled'
   }
   return (
-    groups.map((group) => authGroupServiceName[group]).find((serviceName) => !!serviceName) ?? null
+    groups.map((entity) => authEntityServiceName[entity]).find((serviceName) => !!serviceName) ??
+    null
   )
 }
 
@@ -105,7 +107,7 @@ export function getRequestingService(groups) {
  * ADMIN group membership bypasses both the @auth group check and the serviceAccountPermitted gate.
  */
 export function isAdminCaller({ appid, groups = [] }) {
-  return appid === authGroups.ADMIN || groups.includes(authGroups.ADMIN)
+  return appid === authEntities.ADMIN || groups.includes(authEntities.ADMIN)
 }
 
 /**
@@ -139,7 +141,7 @@ export function checkAuthEntity({ appid, groups = [] }, allowedEntities) {
 
   // the allowedEntities are human-readable names for the AD app or group IDs,
   // so we need to map them to the actual IDs for comparison
-  const allowedEntityIds = allowedEntities.map((entity) => authGroups[entity])
+  const allowedEntityIds = allowedEntities.map((entity) => authEntities[entity])
 
   if (allowedEntityIds.includes(appid)) {
     return
@@ -155,9 +157,10 @@ export function checkAuthEntity({ appid, groups = [] }, allowedEntities) {
 /**
  * A field guarded by @auth is usable by a service-account caller according to the following:
  * - if caller has ADMIN membership, always permitted
- * - if this is a mutation - non-service accounts are permitted, but service accounts are not
- *   permitted
+ * - if this is a mutation - service accounts are NOT permitted, but other consumer accounts are
  * - if this is a query - both service accounts and non-service accounts are permitted
+ *
+ * @throws {Unauthorized} if access is not granted
  */
 export function checkServiceAccountAccess(serviceAccount, serviceAccountPermitted, adminCaller) {
   if (serviceAccount && !serviceAccountPermitted && !adminCaller) {
@@ -169,6 +172,7 @@ export function checkServiceAccountAccess(serviceAccount, serviceAccountPermitte
  * Derives the end user's access type from the request-level end-user auth context (see
  * `app/auth/end-user-auth-context.js`): an `email` header identifies an internal (Rural Payments
  * portal) user, an `x-forwarded-authorization` header identifies an external (Defra ID) user.
+ *
  * @returns {'INTERNAL'|'EXTERNAL'|undefined}
  */
 function getUserAccessType(authContext) {
@@ -183,9 +187,11 @@ function getUserAccessType(authContext) {
 
 /**
  * Checks that the requester's end-user access type (internal/external) satisfies the given
- * @auth allow-list. Unlike `checkAuthGroup`, ADMIN group membership does not bypass this check -
- * the restriction is on the type of end user, not the calling system. A field with no `userType`
- * restriction, or one including `ALL`, is unaffected.
+ * @auth allow-list.
+ * Unlike `checkAuthEntity`, ADMIN group membership does not bypass this check - the restriction is
+ * on the type of end user, not the calling system.
+ * A field with no `userType` restriction, or one including `ALL`, is unaffected.
+ *
  * @throws {Unauthorized} if access is not granted
  */
 export function checkUserAccess(authContext, allowedAccess) {

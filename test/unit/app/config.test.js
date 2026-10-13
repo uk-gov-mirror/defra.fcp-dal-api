@@ -1,5 +1,5 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { authGroups, authGroupServiceName, decodeBase64Config } from '../../../app/config.js'
+import { authEntities, authEntityServiceName, decodeBase64Config } from '../../../app/config.js'
 
 const existingEnvVars = process.env
 
@@ -45,7 +45,7 @@ describe('config', () => {
     expect(config.get('port')).toBe(3000)
     expect(config.get('logLevel')).toBe('info')
     expect(config.get('auth.disabled')).toBe(true)
-    expect(config.get('auth.groups.ADMIN')).toBe(null)
+    expect(config.get('auth.entities.ADMIN')).toBe(null)
     expect(config.get('graphqlDashboardEnabled')).toBe(false)
     expect(config.get('serviceVersion')).toBe(null)
     expect(config.get('kits.requestPageSize')).toBe(100)
@@ -119,12 +119,12 @@ describe('config', () => {
     expect(config.get('defraId.wellKnownUrl')).toBe('https://example.com/defra-id-well-known')
     expect(config.get('defraId.timeoutMs')).toBe(4500)
     expect(config.get('auth.disabled')).toBe(false)
-    expect(config.get('auth.groups.ADMIN')).toBe('admin-group-id')
-    expect(config.get('auth.groups.CONSOLIDATED_VIEW')).toBe('consolidated-view-group-id')
-    expect(config.get('auth.groups.SINGLE_FRONT_DOOR')).toBe('single-front-door-group-id')
-    expect(config.get('auth.groups.SFI_REFORM')).toBe('sfi-reform-group-id')
-    expect(config.get('auth.groups.LAND_GRANTS_API')).toBe('land-grants-api-group-id')
-    expect(config.get('auth.groups.LAND_APP_TECH_SPIKES_API')).toBe(
+    expect(config.get('auth.entities.ADMIN')).toBe('admin-group-id')
+    expect(config.get('auth.entities.CONSOLIDATED_VIEW')).toBe('consolidated-view-group-id')
+    expect(config.get('auth.entities.SINGLE_FRONT_DOOR')).toBe('single-front-door-group-id')
+    expect(config.get('auth.entities.SFI_REFORM')).toBe('sfi-reform-group-id')
+    expect(config.get('auth.entities.LAND_GRANTS_API')).toBe('land-grants-api-group-id')
+    expect(config.get('auth.entities.LAND_APP_TECH_SPIKES_API')).toBe(
       'land-app-tech-spikes-api-group-id'
     )
     expect(config.get('kits.internal.connectionCert')).toBe('internal-cert-value')
@@ -235,7 +235,7 @@ describe('config', () => {
     expect(() => config.set('kits.internal.connectionKey', null)).not.toThrow()
     expect(() => config.set('kits.external.connectionCert', null)).not.toThrow()
     expect(() => config.set('kits.external.connectionKey', null)).not.toThrow()
-    expect(() => config.set('auth.groups.ADMIN', null)).not.toThrow()
+    expect(() => config.set('auth.entities.ADMIN', null)).not.toThrow()
   })
 
   it('should unpack base64 encoded config values', async () => {
@@ -260,8 +260,8 @@ describe('config', () => {
   })
 
   describe('auth settings', () => {
-    it('should have authGroups config matching .env.test setup', () => {
-      expect(authGroups).toEqual({
+    it('should have authEntities config matching .env.test setup', () => {
+      expect(authEntities).toEqual({
         ADMIN: 'some-ad-group-id',
         CONSOLIDATED_VIEW: 'consolidated-view-ad-group-id',
         LAND_GRANTS_API: 'land-grants-api-ad-group-id',
@@ -271,8 +271,8 @@ describe('config', () => {
       })
     })
 
-    it('should have authGroupServiceName links back to the group ID', () => {
-      expect(authGroupServiceName).toEqual({
+    it('should have authEntityServiceName linked to the entity ID (app-reg or group)', () => {
+      expect(authEntityServiceName).toEqual({
         'some-ad-group-id': null,
         'consolidated-view-ad-group-id': 'consolidated-view',
         'land-grants-api-ad-group-id': 'land-grants-api',

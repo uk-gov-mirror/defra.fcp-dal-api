@@ -1032,7 +1032,7 @@ describe('Query.business internal', () => {
       null,
       false,
       {},
-      [config.get(`auth.groups.${group}`)]
+      [config.get(`auth.entities.${group}`)]
     )
 
     expect(internalKitsGateway.isDone()).toBe(true)

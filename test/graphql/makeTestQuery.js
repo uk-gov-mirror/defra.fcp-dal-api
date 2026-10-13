@@ -9,7 +9,7 @@ export const makeTestQuery = async (
   headers,
   isAuthenticated = true,
   variableValues = {},
-  authGroups = [],
+  authEntities = [],
   dropDbOnCompletion = true
 ) => {
   const ctx = await context({ request: { headers: headers ?? defaultHeaders } })
@@ -20,8 +20,8 @@ export const makeTestQuery = async (
       contextValue: {
         ...ctx,
         auth: isAuthenticated
-          ? { groups: [config.get('auth.groups.ADMIN')] }
-          : { groups: authGroups }
+          ? { groups: [config.get('auth.entities.ADMIN')] }
+          : { groups: authEntities }
       },
       variableValues
     })

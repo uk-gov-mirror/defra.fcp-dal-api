@@ -165,7 +165,7 @@ describe('business.permittedFunctions', () => {
   })
 
   test('authorised for business but not in the SFD group - permittedFunctions is blocked', async () => {
-    const consolidatedViewGroup = config.get('auth.groups.CONSOLIDATED_VIEW')
+    const consolidatedViewGroup = config.get('auth.entities.CONSOLIDATED_VIEW')
     enableAuth()
     mockOrganisationSearch(v1)
 

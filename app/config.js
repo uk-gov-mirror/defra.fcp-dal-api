@@ -93,10 +93,10 @@ export const config = convict({
     }
   },
   auth: {
-    groups: {
-      // Note must correspond to AuthGroup Enum except admin which has access to everything
+    entities: {
+      // Note: must correspond to the ID of the consumer's Entra app-reg or AD group
       // For groups used to identify the calling service,
-      // also need to update authGroupServiceName with the service name
+      // also need to update authEntityServiceName with the service name
       ADMIN: {
         doc: 'AD group ID for DAL Admins',
         format: String,
@@ -353,14 +353,14 @@ export const config = convict({
 
 config.validate({ allowed: 'strict' })
 
-export const authGroups = config.get('auth.groups')
-export const authGroupServiceName = {
-  [authGroups.ADMIN]: null,
-  [authGroups.CONSOLIDATED_VIEW]: 'consolidated-view',
-  [authGroups.LAND_GRANTS_API]: 'land-grants-api',
-  [authGroups.SFI_REFORM]: 'grants-platform',
-  [authGroups.SINGLE_FRONT_DOOR]: 'single-front-door',
-  [authGroups.LAND_APP_TECH_SPIKES_API]: 'land-app-tech-spikes-api'
+export const authEntities = config.get('auth.entities')
+export const authEntityServiceName = {
+  [authEntities.ADMIN]: null,
+  [authEntities.CONSOLIDATED_VIEW]: 'consolidated-view',
+  [authEntities.LAND_GRANTS_API]: 'land-grants-api',
+  [authEntities.SFI_REFORM]: 'grants-platform',
+  [authEntities.SINGLE_FRONT_DOOR]: 'single-front-door',
+  [authEntities.LAND_APP_TECH_SPIKES_API]: 'land-app-tech-spikes-api'
 }
 
 export const decodeBase64Config = (value) => Buffer.from(value, 'base64').toString('utf-8').trim()

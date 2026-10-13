@@ -128,7 +128,7 @@ describe('business bankAccounts', () => {
 
   test.each(['SINGLE_FRONT_DOOR', 'SFI_REFORM'])(
     'allows users in the %s group to read bank accounts',
-    async (group) => {
+    async (entity) => {
       configMockPath['auth.disabled'] = false
 
       mockOrganisationSearch(v1)
@@ -136,7 +136,7 @@ describe('business bankAccounts', () => {
       mockExistingAccounts([{ number: '1234', currency: 'GBP' }])
 
       const result = await makeTestQuery(query, null, false, {}, [
-        config.get(`auth.groups.${group}`)
+        config.get(`auth.entities.${entity}`)
       ])
 
       expect(nock.isDone()).toBe(true)
@@ -151,7 +151,7 @@ describe('business bankAccounts', () => {
     mockOrganisationSearch(v1)
 
     const result = await makeTestQuery(query, null, false, {}, [
-      config.get('auth.groups.CONSOLIDATED_VIEW')
+      config.get('auth.entities.CONSOLIDATED_VIEW')
     ])
 
     expect(result.data.business.sbi).toBe('123456789')

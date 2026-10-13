@@ -1,5 +1,7 @@
+import { createAuditTrail } from '../audit/audit-trail.js'
 import { getAuth, getRequestingService } from '../auth/authenticate.js'
 import { defraIdContext } from '../auth/defra-id.js'
+import { endUserAuthContext } from '../auth/end-user-auth-context.js'
 import { config } from '../config.js'
 import { HitachiPayments } from '../data-sources/hitachi/HitachiPayments.js'
 import { JWKS } from '../data-sources/JWKS.js'
@@ -11,8 +13,6 @@ import { RuralPaymentsReferenceData } from '../data-sources/rural-payments/Rural
 import { Permissions } from '../data-sources/static/permissions.js'
 import { logger } from '../logger/logger.js'
 import { db } from '../mongo.js'
-import { endUserAuthContext } from '../auth/end-user-auth-context.js'
-import { createAuditTrail } from '../audit/audit-trail.js'
 
 export async function context({ request }) {
   const auth = await getAuth(request, new JWKS())

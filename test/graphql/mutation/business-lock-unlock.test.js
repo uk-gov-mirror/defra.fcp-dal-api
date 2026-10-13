@@ -212,7 +212,7 @@ describe('business state mutations', () => {
         { 'x-forwarded-authorization': signDefraIdToken({ contactId: '1234567890' }) },
         false,
         { input: { sbi: '123456789', reason: 'test' } },
-        [config.get('auth.groups.SINGLE_FRONT_DOOR')]
+        [config.get('auth.entities.SINGLE_FRONT_DOOR')]
       )
 
       // assert
@@ -223,6 +223,7 @@ describe('business state mutations', () => {
       expect(kits.isDone()).toBe(false)
     })
   })
+
   describe('Deactivate a business', () => {
     test('deactivate a business', async () => {
       const input = {
@@ -230,6 +231,7 @@ describe('business state mutations', () => {
         reason: 'test'
       }
 
+      // <<<<<<< HEAD
       v1.post('/organisation/organisationId/deactivate', {
         partyNoteType: 'DeactivateOrganisation',
         reason: 'test'
@@ -242,6 +244,16 @@ describe('business state mutations', () => {
           deactivated: false
         }
       })
+      // =======
+      //     // act
+      //     const result = await makeTestQuery(
+      //       query,
+      //       { 'x-forwarded-authorization': signDefraIdToken({ contactId: '1234567890' }) },
+      //       false,
+      //       { input: { sbi: '123456789', reason: 'test' } },
+      //       [config.get('auth.entities.SINGLE_FRONT_DOOR')]
+      //     )
+      // >>>>>>> 700bf2eb (refactor: rename auth group code to entity)
 
       const query = `
         mutation DeactivateBusiness ($input: UpdateBusinessDeactivateInput!) {
@@ -302,7 +314,7 @@ describe('business state mutations', () => {
         { 'x-forwarded-authorization': signDefraIdToken({ contactId: '1234567890' }) },
         false,
         { input: { sbi: '123456789', reason: 'test' } },
-        [config.get('auth.groups.SINGLE_FRONT_DOOR')]
+        [config.get('auth.entities.SINGLE_FRONT_DOOR')]
       )
 
       expect(result.data.updateBusinessDeactivate).toBeNull()

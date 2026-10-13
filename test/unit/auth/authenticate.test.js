@@ -142,10 +142,10 @@ describe('authenticate', () => {
   })
 
   describe('checkAuthEntity', () => {
-    const adminGroupId = config.get('auth.groups.ADMIN')
+    const adminGroupId = config.get('auth.entities.ADMIN')
 
     it('allows an appid that matches an allowed entity', () => {
-      const entityId = config.get('auth.groups.SINGLE_FRONT_DOOR')
+      const entityId = config.get('auth.entities.SINGLE_FRONT_DOOR')
       expect(() =>
         checkAuthEntity({ appid: entityId, groups: [] }, ['SINGLE_FRONT_DOOR'])
       ).not.toThrow()
@@ -183,21 +183,21 @@ describe('authenticate', () => {
     })
 
     it('allows a caller with matching group membership when appid does not match', () => {
-      const sfdGroupId = config.get('auth.groups.SINGLE_FRONT_DOOR')
+      const sfdEntityId = config.get('auth.entities.SINGLE_FRONT_DOOR')
       expect(() =>
-        checkAuthEntity({ appid: 'unknown-app', groups: [sfdGroupId] }, ['SINGLE_FRONT_DOOR'])
+        checkAuthEntity({ appid: 'unknown-app', groups: [sfdEntityId] }, ['SINGLE_FRONT_DOOR'])
       ).not.toThrow()
     })
   })
 
   describe('isAdminCaller', () => {
-    const adminGroupId = config.get('auth.groups.ADMIN')
-    const sfdGroupId = config.get('auth.groups.SINGLE_FRONT_DOOR')
+    const adminGroupId = config.get('auth.entities.ADMIN')
+    const sfdEntityId = config.get('auth.entities.SINGLE_FRONT_DOOR')
 
     it.each([
       ['ADMIN is the appid', adminGroupId, [], true],
-      ['ADMIN is among the requester groups', undefined, [sfdGroupId, adminGroupId], true],
-      ['ADMIN is not the appid or among the requester groups', undefined, [sfdGroupId], false],
+      ['ADMIN is among the requester groups', undefined, [sfdEntityId, adminGroupId], true],
+      ['ADMIN is not the appid or among the requester groups', undefined, [sfdEntityId], false],
       ['no appid and an empty group list is provided', undefined, [], false],
       ['no appid and no group list is provided', undefined, undefined, false]
     ])('returns correctly when %s', (_description, appid, groups, expected) => {
@@ -290,12 +290,12 @@ describe('authenticate', () => {
         )
       })
 
-      const adminGroupId = config.get('auth.groups.ADMIN')
-      const consolidatedViewGroupId = config.get('auth.groups.CONSOLIDATED_VIEW')
-      const sfiReformGroupId = config.get('auth.groups.SFI_REFORM')
-      const singleFrontDoorGroupId = config.get('auth.groups.SINGLE_FRONT_DOOR')
-      const landGrantsApiGroupId = config.get('auth.groups.LAND_GRANTS_API')
-      const landAppTechSpikesApiGroupId = config.get('auth.groups.LAND_APP_TECH_SPIKES_API')
+      const adminGroupId = config.get('auth.entities.ADMIN')
+      const consolidatedViewGroupId = config.get('auth.entities.CONSOLIDATED_VIEW')
+      const sfiReformGroupId = config.get('auth.entities.SFI_REFORM')
+      const singleFrontDoorGroupId = config.get('auth.entities.SINGLE_FRONT_DOOR')
+      const landGrantsApiGroupId = config.get('auth.entities.LAND_GRANTS_API')
+      const landAppTechSpikesApiGroupId = config.get('auth.entities.LAND_APP_TECH_SPIKES_API')
 
       it('should return the service name for a single recognised group', () => {
         expect(getRequestingService([consolidatedViewGroupId])).toBe('consolidated-view')
@@ -392,8 +392,8 @@ describe('authenticate', () => {
     })
 
     describe('service account gating', () => {
-      const sfdGroupId = config.get('auth.groups.SINGLE_FRONT_DOOR')
-      const adminGroupId = config.get('auth.groups.ADMIN')
+      const sfdEntityId = config.get('auth.entities.SINGLE_FRONT_DOOR')
+      const adminEntityId = config.get('auth.entities.ADMIN')
       const rootValue = {
         gatedQueryFieldDefault: 'a',
         gatedQueryFieldExplicitlyClosed: 'b',
@@ -430,7 +430,7 @@ describe('authenticate', () => {
 
       it('allows a non-service-account caller in the required group', async () => {
         const result = await run('gatedQueryFieldDefault', {
-          auth: { appid: 'some-appid', groups: [sfdGroupId] },
+          auth: { appid: 'some-appid', groups: [sfdEntityId] },
           authContext: {}
         })
         expect(result.errors).toBeUndefined()
@@ -440,7 +440,7 @@ describe('authenticate', () => {
       it('allows a service account on a Query field ', async () => {
         const result = await run(
           'gatedQueryFieldDefault',
-          serviceAccountContext({ groups: [sfdGroupId] })
+          serviceAccountContext({ groups: [sfdEntityId] })
         )
         expect(result.errors).toBeUndefined()
         expect(result.data.gatedQueryFieldDefault).toBe('a')
@@ -449,7 +449,7 @@ describe('authenticate', () => {
       it('denies a service account access to Mutations', async () => {
         const result = await run(
           'gatedMutationFieldDefault',
-          serviceAccountContext({ groups: [sfdGroupId] }),
+          serviceAccountContext({ groups: [sfdEntityId] }),
           {
             mutation: true
           }
@@ -461,7 +461,7 @@ describe('authenticate', () => {
       it('allows an ADMIN-group service account on a Mutation field', async () => {
         const result = await run(
           'gatedMutationFieldDefault',
-          serviceAccountContext({ groups: [adminGroupId] }),
+          serviceAccountContext({ groups: [adminEntityId] }),
           { mutation: true }
         )
         expect(result.errors).toBeUndefined()
@@ -471,7 +471,7 @@ describe('authenticate', () => {
       it('allows an ADMIN app service account on a Mutation field', async () => {
         const result = await run(
           'gatedMutationFieldDefault',
-          serviceAccountContext({ appid: adminGroupId }),
+          serviceAccountContext({ appid: adminEntityId }),
           { mutation: true }
         )
         expect(result.errors).toBeUndefined()
@@ -480,8 +480,8 @@ describe('authenticate', () => {
     })
 
     describe('user access gating', () => {
-      const sfdGroupId = config.get('auth.groups.SINGLE_FRONT_DOOR')
-      const adminGroupId = config.get('auth.groups.ADMIN')
+      const sfdEntityId = config.get('auth.entities.SINGLE_FRONT_DOOR')
+      const adminEntityId = config.get('auth.entities.ADMIN')
       const rootValue = { gatedQueryFieldInternalOnly: 'a' }
 
       const run = (contextValue) =>
@@ -494,7 +494,7 @@ describe('authenticate', () => {
 
       it('allows an internal caller', async () => {
         const result = await run({
-          auth: { groups: [sfdGroupId] },
+          auth: { groups: [sfdEntityId] },
           authContext: { internalAuthHeader: 'user@defra.gov.uk' }
         })
         expect(result.errors).toBeUndefined()
@@ -503,7 +503,7 @@ describe('authenticate', () => {
 
       it('denies an external caller', async () => {
         const result = await run({
-          auth: { groups: [sfdGroupId] },
+          auth: { groups: [sfdEntityId] },
           authContext: { externalAuthHeader: 'Bearer token' }
         })
         expect(result.errors?.[0].message).toMatch(/not available to this user type/)
@@ -511,7 +511,7 @@ describe('authenticate', () => {
 
       it('denies a service account', async () => {
         const result = await run({
-          auth: { groups: [sfdGroupId] },
+          auth: { groups: [sfdEntityId] },
           authContext: { serviceAccount: 'service-account@example.com' }
         })
         expect(result.errors?.[0].message).toMatch(/not available to this user type/)
@@ -519,7 +519,7 @@ describe('authenticate', () => {
 
       it('denies an ADMIN-group external caller', async () => {
         const result = await run({
-          auth: { groups: [adminGroupId] },
+          auth: { groups: [adminEntityId] },
           authContext: { externalAuthHeader: 'Bearer token' }
         })
         expect(result.errors?.[0].message).toMatch(/not available to this user type/)
@@ -527,7 +527,7 @@ describe('authenticate', () => {
 
       it('allows an ADMIN-group internal caller', async () => {
         const result = await run({
-          auth: { groups: [adminGroupId] },
+          auth: { groups: [adminEntityId] },
           authContext: { internalAuthHeader: 'user@defra.gov.uk' }
         })
         expect(result.errors).toBeUndefined()

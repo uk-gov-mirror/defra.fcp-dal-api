@@ -21,8 +21,8 @@ It is implemented as a schema transformer (`authDirectiveTransformer`) in
 
 ### `requires` - which consumer entities can call this field
 
-`requires` names one or more of the AD groups configured in `app/config.js`
-(`auth.groups.{ADMIN,CONSOLIDATED_VIEW,SINGLE_FRONT_DOOR,SFI_REFORM}`), each mapping to an Azure AD
+`requires` names one or more Entra app-reg or AD group IDs configured in `app/config.js`
+(`auth.entities.{ADMIN,CONSOLIDATED_VIEW,SINGLE_FRONT_DOOR,SFI_REFORM}`), each mapping to an Azure AD
 Entra group ID / entity ID for a consuming system (Consolidated View, Single Front Door, Grants
 Platform, etc).
 
@@ -34,14 +34,14 @@ existing `groups` claim check. This identifies _which system_ is calling the DAL
 The end user is identified by one-of `email`/`x-forwarded-authorization`/`service-account` headers.
 Every field-level `@auth` check runs against the `appid` and `groups` claims in `context.auth`.
 
-A caller in the `ADMIN` group bypasses the `requires` check entirely (and the
-`serviceAccountPermitted` check below), regardless of what groups the field lists.
+A caller with the configured `ADMIN` app-reg (or group) ID bypasses the `requires` check entirely
+(and the `serviceAccountPermitted` check below), regardless of what groups the field lists.
 
 A field with no `@auth` directive at all has no group restriction - anyone who can reach the DAL
 can call it (e.g. `Query.referenceData`).
 A schema test (`test/graphql/schema.test.js` -
 `'ensures all sensitive top-level fields have @auth directive'`) guards against a new top-level
-field accidentally being left unprotected.
+field accidentally being left unprotected. 🔒
 
 ### `userType` - which end-user type can call this field
 
@@ -57,11 +57,13 @@ internalUser: InternalUser @auth(requires: [SINGLE_FRONT_DOOR], userType: [INTER
 ```
 
 A field with no `userType` argument has no end-user-type restriction (only the `requires` check
-applies). `userType: [ALL]` is equivalent, but lets a field state explicitly that it's intended for
-both internal and external users rather than relying on that default. Unlike `requires`, the
-`ADMIN` group does **not** bypass the `userType` check - it restricts the type of end user, not the
-calling system, so an `ADMIN` caller must still carry the matching header. A service account carries
-neither header, so it never satisfies an `INTERNAL` or `EXTERNAL` restriction.
+applies).
+`userType: [ALL]` is equivalent, but lets a field state explicitly that it's intended for both
+internal and external users rather than relying on that default. Unlike `requires`, the `ADMIN`
+app-reg/group does **not** bypass the `userType` check - it restricts the type of end user, not the
+calling system, so an `ADMIN` caller must still carry the matching header.
+A service account carries neither header, so it never satisfies an `INTERNAL` or `EXTERNAL`
+restriction.
 
 ### Cascading from `OBJECT` to fields
 
@@ -88,34 +90,35 @@ Whether the _current_ caller is a service account is derived from the same reque
 truthy when a `service-account` header was supplied) - see `app/graphql/context.js` and
 `app/auth/end-user-auth-context.js`.
 
-As with the `@auth` directive, an `ADMIN`-group caller bypasses the service account check too - an
-admin service account can call any `@auth`-protected field, mutations included.
+As with the `@auth` directive, an `ADMIN` caller bypasses the service account check too.
+An admin service account can call any `@auth`-protected field, mutations included.
 
 ### What actually happens when access is denied
 
 `authDirectiveTransformer` wraps the field's resolver with three checks, in order:
 
-1. `checkAuthEntity(auth, requires)` - throws `Unauthorized` if the token's `appid` does not match
-   an allowed entity and the caller isn't in `ADMIN` or any group in `requires`.
+1. `checkAuthEntity(auth, requires)` - throws `Unauthorized` if the token's `appid`/`group` does
+   not match an allowed entity and the caller is not an `ADMIN` or any service listed in
+   `requires`.
 2. `checkServiceAccountAccess(isServiceAccount, serviceAccountPermitted, isAdmin)` - throws
    `Unauthorized` if the caller is a service account, `serviceAccountPermitted` is `false`, and the
-   caller isn't `ADMIN`.
+   caller is not `ADMIN`.
 3. `checkUserAccess(authContext, userType)` - throws `Unauthorized` if the field has a `userType`
    restriction and the request's end-user headers don't match any of the listed `UserAccessType`s
    (`ADMIN` callers included).
 
-Either throw surfaces as a normal GraphQL execution error against that field - the rest of the
+Thrown exceptions surface as a normal GraphQL execution error against that field - the rest of the
 query (sibling fields) still resolves normally.
 
 ## Local development
 
-Setting `DISABLE_AUTH=true` skips `@auth` enforcement entirely
+Setting `DISABLE_AUTH=true` skips `@auth` enforcement entirely:
 
 - `getRequestingService` returns a placeholder value
-- a default app-reg ID is used (as there is no token to derive the `appid` claim from)
+- a default app-reg ID is used (as there is no token to derive the `appid`/`groups` claim from)
 - and `authDirectiveTransformer` is not applied to the schema at all
 
 This is only ever allowed when `cdp.env` is `dev` - `schema.js` throws at startup if auth is
-disabled anywhere else, so it can't be accidentally left on in a real environment.
+disabled anywhere else, so it cannot be accidentally left on in a real environment.
 
 [< back to Homepage](./homepage)

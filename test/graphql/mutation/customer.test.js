@@ -348,7 +348,7 @@ describe('customer mutations', () => {
         { email: 'test@defra.gov.uk' },
         false,
         { input },
-        [config.get('auth.groups.SINGLE_FRONT_DOOR')]
+        [config.get('auth.entities.SINGLE_FRONT_DOOR')]
       )
 
       // assert
@@ -357,8 +357,8 @@ describe('customer mutations', () => {
     })
 
     test.each([
-      ['SINGLE_FRONT_DOOR', 'auth.groups.SINGLE_FRONT_DOOR'],
-      ['ADMIN', 'auth.groups.ADMIN']
+      ['SINGLE_FRONT_DOOR', 'auth.entities.SINGLE_FRONT_DOOR'],
+      ['ADMIN', 'auth.entities.ADMIN']
     ])('blocks an external user calling as %s', async (_, group) => {
       // arrange
       const internalKits = nockAction('internal')
@@ -515,7 +515,7 @@ describe('customer mutations', () => {
 
       // act
       const result = await makeTestQuery(deactivateMutation, null, false, { input: validInput }, [
-        config.get('auth.groups.SINGLE_FRONT_DOOR')
+        config.get('auth.entities.SINGLE_FRONT_DOOR')
       ])
 
       // assert
@@ -530,7 +530,7 @@ describe('customer mutations', () => {
 
       // act
       const result = await makeTestQuery(deactivateMutation, null, false, { input: validInput }, [
-        config.get('auth.groups.CONSOLIDATED_VIEW')
+        config.get('auth.entities.CONSOLIDATED_VIEW')
       ])
 
       // assert
@@ -551,7 +551,7 @@ describe('customer mutations', () => {
         { 'service-account': 'service@defra.gov.uk' },
         false,
         { input: validInput },
-        [config.get('auth.groups.SINGLE_FRONT_DOOR')]
+        [config.get('auth.entities.SINGLE_FRONT_DOOR')]
       )
 
       // assert
@@ -575,7 +575,7 @@ describe('customer mutations', () => {
         { 'x-forwarded-authorization': signDefraIdToken({ contactId: '1234567890' }) },
         false,
         { input: validInput },
-        [config.get('auth.groups.SINGLE_FRONT_DOOR')]
+        [config.get('auth.entities.SINGLE_FRONT_DOOR')]
       )
 
       // assert
@@ -785,7 +785,7 @@ describe('customer mutations', () => {
         null,
         false,
         { input: validInput },
-        [config.get('auth.groups.CONSOLIDATED_VIEW')]
+        [config.get('auth.entities.CONSOLIDATED_VIEW')]
       )
 
       // assert
@@ -819,7 +819,7 @@ describe('customer mutations', () => {
         { 'x-forwarded-authorization': signDefraIdToken({ contactId: '1234567890' }) },
         false,
         { input: validInput },
-        [config.get('auth.groups.SINGLE_FRONT_DOOR')]
+        [config.get('auth.entities.SINGLE_FRONT_DOOR')]
       )
 
       // assert
@@ -841,7 +841,7 @@ describe('customer mutations', () => {
         { 'x-forwarded-authorization': signDefraIdToken({ contactId: '1111111111' }) },
         false,
         { input: validInput },
-        [config.get('auth.groups.SINGLE_FRONT_DOOR')]
+        [config.get('auth.entities.SINGLE_FRONT_DOOR')]
       )
 
       // assert
@@ -1132,7 +1132,7 @@ describe('customer mutations', () => {
         }
       }
     `
-    const sfdGroups = () => [config.get('auth.groups.SINGLE_FRONT_DOOR')]
+    const sfdGroups = () => [config.get('auth.entities.SINGLE_FRONT_DOOR')]
 
     const makeExternalQuery = (variables = {}) => {
       mockDefraIdJwks()

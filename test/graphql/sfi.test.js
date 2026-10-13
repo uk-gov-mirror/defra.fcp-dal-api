@@ -136,7 +136,7 @@ describe('SFI Query', () => {
       },
       false,
       {},
-      [config.get('auth.groups.SFI_REFORM')]
+      [config.get('auth.entities.SFI_REFORM')]
     )
 
     expect(result).toEqual({
