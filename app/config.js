@@ -94,49 +94,49 @@ export const config = convict({
   },
   auth: {
     entities: {
-      // Note: must correspond to the ID of the consumer's Entra app-reg or AD group
-      // For groups used to identify the calling service,
-      // also need to update authEntityServiceName with the service name
+      // Note: must correspond with the ID of the consumer's Entra app-reg or AD group.
+      // When adding an entity config to identify a new calling service,
+      // also need to update `authEntityServiceName` below with the service name.
       ADMIN: {
-        doc: 'AD group ID for DAL Admins',
+        doc: 'Entra app-reg or AD group ID for DAL Admins',
         format: String,
         default: null,
-        env: 'ADMIN_AD_GROUP_ID',
+        env: 'ADMIN_ENTITY_ID',
         nullable: true
       },
       CONSOLIDATED_VIEW: {
-        doc: 'AD group ID for Consolidated View',
+        doc: 'Entra app-reg or AD group ID for Consolidated View',
         format: String,
         default: null,
-        env: 'CONSOLIDATED_VIEW_AD_GROUP_ID',
+        env: 'CONSOLIDATED_VIEW_ENTITY_ID',
         nullable: true
       },
       SINGLE_FRONT_DOOR: {
-        doc: 'AD group ID for SFD',
+        doc: 'Entra app-reg or AD group ID for SFD',
         format: String,
         default: null,
-        env: 'SINGLE_FRONT_DOOR_AD_GROUP_ID',
+        env: 'SINGLE_FRONT_DOOR_ENTITY_ID',
         nullable: true
       },
       SFI_REFORM: {
-        doc: 'AD group ID for Future grants team',
+        doc: 'Entra app-reg or AD group ID for Future grants team',
         format: String,
         default: null,
-        env: 'SFI_REFORM_AD_GROUP_ID',
+        env: 'SFI_REFORM_ENTITY_ID',
         nullable: true
       },
       LAND_GRANTS_API: {
-        doc: 'AD group ID for Land Grants API team',
+        doc: 'Entra app-reg or AD group ID for Land Grants API team',
         format: String,
         default: null,
-        env: 'LAND_GRANTS_API_AD_GROUP_ID',
+        env: 'LAND_GRANTS_API_ENTITY_ID',
         nullable: true
       },
       LAND_APP_TECH_SPIKES_API: {
-        doc: 'AD group ID for Land App Tech Spikes API team',
+        doc: 'Entra app-reg or AD group ID for Land App Tech Spikes API team',
         format: String,
         default: null,
-        env: 'LAND_APP_TECH_SPIKES_AD_GROUP_ID',
+        env: 'LAND_APP_TECH_SPIKES_ENTITY_ID',
         nullable: true
       }
     },

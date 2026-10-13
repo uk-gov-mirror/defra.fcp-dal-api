@@ -25,7 +25,7 @@ describe('config', () => {
     delete process.env.KITS_INTERNAL_CONNECTION_KEY
     delete process.env.KITS_EXTERNAL_CONNECTION_CERT
     delete process.env.KITS_EXTERNAL_CONNECTION_KEY
-    delete process.env.ADMIN_AD_GROUP_ID
+    delete process.env.ADMIN_ENTITY_ID
     delete process.env.OIDC_JWKS_TIMEOUT_MS
     delete process.env.OIDC_JWKS_URI
     delete process.env.DEFRA_ID_WELL_KNOWN_URL
@@ -74,12 +74,12 @@ describe('config', () => {
     process.env.DEFRA_ID_WELL_KNOWN_URL = 'https://example.com/defra-id-well-known'
     process.env.DEFRA_ID_TIMEOUT_MS = '4500'
     process.env.DISABLE_AUTH = 'false'
-    process.env.ADMIN_AD_GROUP_ID = 'admin-group-id'
-    process.env.CONSOLIDATED_VIEW_AD_GROUP_ID = 'consolidated-view-group-id'
-    process.env.SINGLE_FRONT_DOOR_AD_GROUP_ID = 'single-front-door-group-id'
-    process.env.SFI_REFORM_AD_GROUP_ID = 'sfi-reform-group-id'
-    process.env.LAND_GRANTS_API_AD_GROUP_ID = 'land-grants-api-group-id'
-    process.env.LAND_APP_TECH_SPIKES_AD_GROUP_ID = 'land-app-tech-spikes-api-group-id'
+    process.env.ADMIN_ENTITY_ID = 'admin-group-id'
+    process.env.CONSOLIDATED_VIEW_ENTITY_ID = 'consolidated-view-group-id'
+    process.env.SINGLE_FRONT_DOOR_ENTITY_ID = 'single-front-door-group-id'
+    process.env.SFI_REFORM_ENTITY_ID = 'sfi-reform-group-id'
+    process.env.LAND_GRANTS_API_ENTITY_ID = 'land-grants-api-group-id'
+    process.env.LAND_APP_TECH_SPIKES_ENTITY_ID = 'land-app-tech-spikes-api-group-id'
     process.env.KITS_INTERNAL_CONNECTION_CERT = 'internal-cert-value'
     process.env.KITS_INTERNAL_CONNECTION_KEY = 'internal-key-value'
     process.env.KITS_INTERNAL_GATEWAY_URL = 'https://internal.example.com'
@@ -262,23 +262,23 @@ describe('config', () => {
   describe('auth settings', () => {
     it('should have authEntities config matching .env.test setup', () => {
       expect(authEntities).toEqual({
-        ADMIN: 'some-ad-group-id',
-        CONSOLIDATED_VIEW: 'consolidated-view-ad-group-id',
-        LAND_GRANTS_API: 'land-grants-api-ad-group-id',
-        SFI_REFORM: 'sfi-reform-ad-group-id',
-        SINGLE_FRONT_DOOR: 'single-front-door-ad-group-id',
-        LAND_APP_TECH_SPIKES_API: 'land-app-tech-spikes-api-ad-group-id'
+        ADMIN: 'some-entity-id',
+        CONSOLIDATED_VIEW: 'consolidated-view-entity-id',
+        LAND_GRANTS_API: 'land-grants-api-entity-id',
+        SFI_REFORM: 'sfi-reform-entity-id',
+        SINGLE_FRONT_DOOR: 'single-front-door-entity-id',
+        LAND_APP_TECH_SPIKES_API: 'land-app-tech-spikes-api-entity-id'
       })
     })
 
     it('should have authEntityServiceName linked to the entity ID (app-reg or group)', () => {
       expect(authEntityServiceName).toEqual({
-        'some-ad-group-id': null,
-        'consolidated-view-ad-group-id': 'consolidated-view',
-        'land-grants-api-ad-group-id': 'land-grants-api',
-        'sfi-reform-ad-group-id': 'grants-platform',
-        'single-front-door-ad-group-id': 'single-front-door',
-        'land-app-tech-spikes-api-ad-group-id': 'land-app-tech-spikes-api'
+        'some-entity-id': null,
+        'consolidated-view-entity-id': 'consolidated-view',
+        'land-grants-api-entity-id': 'land-grants-api',
+        'sfi-reform-entity-id': 'grants-platform',
+        'single-front-door-entity-id': 'single-front-door',
+        'land-app-tech-spikes-api-entity-id': 'land-app-tech-spikes-api'
       })
     })
   })
