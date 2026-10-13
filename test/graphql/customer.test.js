@@ -302,7 +302,7 @@ describe('Query.customer', () => {
     const result = await makeTestQuery(
       `#graphql
         query Customer {
-          customer(crn: "crn") {
+          customer(crn: "1234567890") {
             crn
           }
         }

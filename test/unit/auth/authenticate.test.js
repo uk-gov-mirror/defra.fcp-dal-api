@@ -2,7 +2,7 @@ import { buildSchema, findBreakingChanges, graphql } from 'graphql'
 import jwt from 'jsonwebtoken'
 import { generateKeyPairSync } from 'node:crypto'
 import { beforeEach, describe, expect, it, test, vi } from 'vitest'
-import { authGroups, config } from '../../../app/config.js'
+import { config } from '../../../app/config.js'
 import { Unauthorized } from '../../../app/errors/graphql.js'
 
 const info = vi.fn()
@@ -151,6 +151,12 @@ describe('authenticate', () => {
       ).not.toThrow()
     })
 
+    it('throws Unauthorized when the appid is undefined and no matching groups are present', () => {
+      expect(() =>
+        checkAuthEntity({ appid: undefined, groups: [] }, ['LAND_APP_TECH_SPIKES'])
+      ).toThrow(Unauthorized)
+    })
+
     it('throws Unauthorized when the appid and groups do not match an allowed entity', () => {
       const testGroup = 'ADMIN'
       expect(() => checkAuthEntity({ appid: 'unknown-app', groups: [] }, [testGroup])).toThrow(
@@ -295,14 +301,14 @@ describe('authenticate', () => {
       const sfiReformGroupId = config.get('auth.entities.SFI_REFORM')
       const singleFrontDoorGroupId = config.get('auth.entities.SINGLE_FRONT_DOOR')
       const landGrantsApiGroupId = config.get('auth.entities.LAND_GRANTS_API')
-      const landAppTechSpikesApiGroupId = config.get('auth.entities.LAND_APP_TECH_SPIKES_API')
+      const landAppTechSpikesApiGroupId = config.get('auth.entities.LAND_APP_TECH_SPIKES')
 
       it('should return the service name for a single recognised group', () => {
         expect(getRequestingService([consolidatedViewGroupId])).toBe('consolidated-view')
         expect(getRequestingService([sfiReformGroupId])).toBe('grants-platform')
         expect(getRequestingService([singleFrontDoorGroupId])).toBe('single-front-door')
         expect(getRequestingService([landGrantsApiGroupId])).toBe('land-grants-api')
-        expect(getRequestingService([landAppTechSpikesApiGroupId])).toBe('land-app-tech-spikes-api')
+        expect(getRequestingService([landAppTechSpikesApiGroupId])).toBe('land-app-tech-spikes')
       })
 
       it('should return null when the only group present is ADMIN', () => {

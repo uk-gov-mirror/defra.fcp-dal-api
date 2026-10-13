@@ -141,14 +141,14 @@ export function checkAuthEntity({ appid, groups = [] }, allowedEntities) {
 
   // the allowedEntities are human-readable names for the AD app or group IDs,
   // so we need to map them to the actual IDs for comparison
-  const allowedEntityIds = allowedEntities.map((entity) => authEntities[entity])
+  const allowedEntityIds = (allowedEntities ?? []).map((entity) => authEntities[entity])
 
-  if (allowedEntityIds.includes(appid)) {
+  if (appid && allowedEntityIds.includes(appid)) {
     return
   }
 
   // check if the requester's groups intersect with the allowed groups
-  const hasAccess = allowedEntityIds.some((entityId) => entityId && groups.includes(entityId))
+  const hasAccess = allowedEntityIds.some((entityId) => groups.includes(entityId))
   if (!hasAccess) {
     throw new Unauthorized('Authorization failed, you are not in the correct AD groups')
   }

@@ -79,7 +79,7 @@ describe('config', () => {
     process.env.SINGLE_FRONT_DOOR_ENTITY_ID = 'single-front-door-group-id'
     process.env.SFI_REFORM_ENTITY_ID = 'sfi-reform-group-id'
     process.env.LAND_GRANTS_API_ENTITY_ID = 'land-grants-api-group-id'
-    process.env.LAND_APP_TECH_SPIKES_ENTITY_ID = 'land-app-tech-spikes-api-group-id'
+    process.env.LAND_APP_TECH_SPIKES_ENTITY_ID = 'land-app-tech-spikes-group-id'
     process.env.KITS_INTERNAL_CONNECTION_CERT = 'internal-cert-value'
     process.env.KITS_INTERNAL_CONNECTION_KEY = 'internal-key-value'
     process.env.KITS_INTERNAL_GATEWAY_URL = 'https://internal.example.com'
@@ -123,10 +123,7 @@ describe('config', () => {
     expect(config.get('auth.entities.CONSOLIDATED_VIEW')).toBe('consolidated-view-group-id')
     expect(config.get('auth.entities.SINGLE_FRONT_DOOR')).toBe('single-front-door-group-id')
     expect(config.get('auth.entities.SFI_REFORM')).toBe('sfi-reform-group-id')
-    expect(config.get('auth.entities.LAND_GRANTS_API')).toBe('land-grants-api-group-id')
-    expect(config.get('auth.entities.LAND_APP_TECH_SPIKES_API')).toBe(
-      'land-app-tech-spikes-api-group-id'
-    )
+    expect(config.get('auth.entities.LAND_APP_TECH_SPIKES')).toBe('land-app-tech-spikes-group-id')
     expect(config.get('kits.internal.connectionCert')).toBe('internal-cert-value')
     expect(config.get('kits.internal.connectionKey')).toBe('internal-key-value')
     expect(config.get('kits.internal.gatewayUrl')).toBe('https://internal.example.com')
@@ -172,7 +169,8 @@ describe('config', () => {
       'oidc.jwksURI: must be of type String',
       'oidc.timeoutMs: must be an integer',
       'defraId.wellKnownUrl: must be of type String',
-      'defraId.timeoutMs: must be an integer'
+      'defraId.timeoutMs: must be an integer',
+      'auth.entities.ADMIN: must be of type String'
     ]
     await expect(loadFreshConfig()).rejects.toEqual(new Error(expectedErrors.join('\n')))
     process.env.DISABLE_AUTH = 'true'
@@ -267,7 +265,7 @@ describe('config', () => {
         LAND_GRANTS_API: 'land-grants-api-entity-id',
         SFI_REFORM: 'sfi-reform-entity-id',
         SINGLE_FRONT_DOOR: 'single-front-door-entity-id',
-        LAND_APP_TECH_SPIKES_API: 'land-app-tech-spikes-api-entity-id'
+        LAND_APP_TECH_SPIKES: 'land-app-tech-spikes-entity-id'
       })
     })
 
@@ -278,7 +276,31 @@ describe('config', () => {
         'land-grants-api-entity-id': 'land-grants-api',
         'sfi-reform-entity-id': 'grants-platform',
         'single-front-door-entity-id': 'single-front-door',
-        'land-app-tech-spikes-api-entity-id': 'land-app-tech-spikes-api'
+        'land-app-tech-spikes-entity-id': 'land-app-tech-spikes'
+      })
+    })
+
+    describe('ALL entity config MUST be set in the env with auth enabled', () => {
+      beforeEach(() => {
+        process.env.DISABLE_AUTH = 'false'
+        process.env.KITS_INTERNAL_CONNECTION_CERT = 'internal-cert'
+        process.env.KITS_INTERNAL_CONNECTION_KEY = 'internal-key'
+        process.env.KITS_EXTERNAL_CONNECTION_CERT = 'external-cert'
+        process.env.KITS_EXTERNAL_CONNECTION_KEY = 'external-key'
+      })
+
+      it.each([
+        'ADMIN',
+        'CONSOLIDATED_VIEW',
+        'LAND_GRANTS_API',
+        'SINGLE_FRONT_DOOR',
+        'SFI_REFORM',
+        'LAND_APP_TECH_SPIKES'
+      ])('should throw an error if the %s entity config is missing', async (entity) => {
+        delete process.env[`${entity}_ENTITY_ID`]
+        await expect(loadFreshConfig()).rejects.toThrow(
+          `auth.entities.${entity}: must be of type String`
+        )
       })
     })
   })

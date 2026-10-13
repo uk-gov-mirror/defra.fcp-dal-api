@@ -102,42 +102,42 @@ export const config = convict({
         format: String,
         default: null,
         env: 'ADMIN_ENTITY_ID',
-        nullable: true
+        nullable: process.env.DISABLE_AUTH === 'true'
       },
       CONSOLIDATED_VIEW: {
         doc: 'Entra app-reg or AD group ID for Consolidated View',
         format: String,
         default: null,
         env: 'CONSOLIDATED_VIEW_ENTITY_ID',
-        nullable: true
+        nullable: process.env.DISABLE_AUTH === 'true'
       },
       SINGLE_FRONT_DOOR: {
         doc: 'Entra app-reg or AD group ID for SFD',
         format: String,
         default: null,
         env: 'SINGLE_FRONT_DOOR_ENTITY_ID',
-        nullable: true
+        nullable: process.env.DISABLE_AUTH === 'true'
       },
       SFI_REFORM: {
         doc: 'Entra app-reg or AD group ID for Future grants team',
         format: String,
         default: null,
         env: 'SFI_REFORM_ENTITY_ID',
-        nullable: true
+        nullable: process.env.DISABLE_AUTH === 'true'
       },
       LAND_GRANTS_API: {
         doc: 'Entra app-reg or AD group ID for Land Grants API team',
         format: String,
         default: null,
         env: 'LAND_GRANTS_API_ENTITY_ID',
-        nullable: true
+        nullable: process.env.DISABLE_AUTH === 'true'
       },
-      LAND_APP_TECH_SPIKES_API: {
+      LAND_APP_TECH_SPIKES: {
         doc: 'Entra app-reg or AD group ID for Land App Tech Spikes API team',
         format: String,
         default: null,
         env: 'LAND_APP_TECH_SPIKES_ENTITY_ID',
-        nullable: true
+        nullable: process.env.DISABLE_AUTH === 'true'
       }
     },
     disabled: {
@@ -360,7 +360,7 @@ export const authEntityServiceName = {
   [authEntities.LAND_GRANTS_API]: 'land-grants-api',
   [authEntities.SFI_REFORM]: 'grants-platform',
   [authEntities.SINGLE_FRONT_DOOR]: 'single-front-door',
-  [authEntities.LAND_APP_TECH_SPIKES_API]: 'land-app-tech-spikes-api'
+  [authEntities.LAND_APP_TECH_SPIKES]: 'land-app-tech-spikes'
 }
 
 export const decodeBase64Config = (value) => Buffer.from(value, 'base64').toString('utf-8').trim()

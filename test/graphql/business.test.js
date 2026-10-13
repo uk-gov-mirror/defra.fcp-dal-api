@@ -1014,7 +1014,7 @@ describe('Query.business internal', () => {
     'SINGLE_FRONT_DOOR',
     'SFI_REFORM',
     'LAND_GRANTS_API',
-    'LAND_APP_TECH_SPIKES_API'
+    'LAND_APP_TECH_SPIKES'
   ])('allows users in the %s group to query business', async (group) => {
     configMockPath['auth.disabled'] = false
 
