@@ -9,26 +9,44 @@ import { logger } from '../logger/logger.js'
 import { sendMetric } from '../logger/sendMetric.js'
 
 const unauthedAppid = config.get('auth.disabled')
-  ? 'auth-disabled-no-appid'
-  : 'no-appid-no-auth-provided'
+  ? 'auth-disabled-no-entityId'
+  : 'no-entityId--no-auth-provided'
+const unknownService = 'unknown-unauthorised-service'
+const allowedEntityIds = Object.values(authEntities)
 
-export async function getAuth(request, jwkDatasource) {
+const identifyService = (appid, groups) => {
+  return (
+    allowedEntityIds.find((allowedId) => allowedId === appid) ??
+    // the first group that matches an allowed entity, if any
+    (Array.isArray(groups) && groups.length
+      ? allowedEntityIds.find((entity) => groups.includes(entity))
+      : undefined) ??
+    'no-entityId--no-approved-app-or-groups'
+  )
+}
+
+/**
+ * Gets the authorised entity info from Authorization header contents in the `request` object.
+ * Matches the `appid` (or `azp`), then `groups` claims from the JWT against the authorised
+ * entities from the config (in that order, until the first matching ID) - otherwise the request
+ * is considered unauthorised (and the `entityId` and `serviceName` are set accordingly).
+ *
+ * @param {*} request the incoming HTTP request
+ * @param {*} jwkDatasource the JWKS keystore for verifying the JWT
+ * @returns {Promise<{entityId: string, serviceName: string}>} the consumer ID and serviceName
+ * @throws {Unauthorized} if the token is invalid or expired
+ */
+export async function getAuthorisedEntity(request, jwkDatasource) {
   try {
     const token = request?.headers?.authorization?.split(' ')[1]
     if (!token) {
-      return { appid: unauthedAppid }
+      return { entityId: unauthedAppid, serviceName: unknownService }
     }
 
-    logger.debug('#DAL - Request authentication - Check verification', {
-      code: DAL_REQUEST_AUTHENTICATION_001,
-      request: { remoteAddress: request?.info?.remoteAddress }
-    })
     const decodedToken = decodeProtectedHeader(token)
     const requestStart = Date.now()
     const signingKey = await jwkDatasource.getPublicKey(decodedToken.kid)
-    const { payload: verified } = await jwtVerify(token, signingKey, {
-      algorithms: ['RS256']
-    })
+    const { payload: verified } = await jwtVerify(token, signingKey, { algorithms: ['RS256'] })
     const requestTimeMs = Date.now() - requestStart
     void sendMetric('RequestTime', requestTimeMs, Unit.Milliseconds, {
       code: DAL_REQUEST_AUTHENTICATION_001
@@ -39,9 +57,7 @@ export async function getAuth(request, jwkDatasource) {
       code: DAL_REQUEST_AUTHENTICATION_001,
       traceId: request?.traceId,
       requestTimeMs,
-      request: {
-        remoteAddress: request?.info?.remoteAddress
-      },
+      request: { remoteAddress: request?.info?.remoteAddress },
       tenant: {
         message: JSON.stringify({
           appid: verified.appid,
@@ -59,7 +75,9 @@ export async function getAuth(request, jwkDatasource) {
       }
     })
 
-    return verified
+    const entityId = identifyService(verified.appid ?? verified.azp, verified.groups)
+
+    return { entityId, serviceName: authEntityServiceName[entityId] ?? unknownService }
   } catch (error) {
     if (
       error.name === 'TokenExpiredError' ||
@@ -80,34 +98,8 @@ export async function getAuth(request, jwkDatasource) {
         request: { remoteAddress: request?.info?.remoteAddress }
       })
     }
-    return { appid: 'no-appid-token-verification-failed' }
+    return { entityId: 'no-entityId--token-verification-failed', serviceName: unknownService }
   }
-}
-
-/**
- * Returns the requesting service name based on the security groups.
- * Note: this will likely switch to using the appid see (https://eaflood.atlassian.net/browse/FCPDAL-490)
- * however using groups for now for consistency with our permission model.
- *
- * @param {string[]} groups
- * @returns the calling service or null if service wasn't identified
- */
-export function getRequestingService(groups) {
-  // Return a placeholder service name, when auth is disabled.
-  if (config.get('auth.disabled')) {
-    return 'auth-disabled'
-  }
-  return (
-    groups.map((entity) => authEntityServiceName[entity]).find((serviceName) => !!serviceName) ??
-    null
-  )
-}
-
-/**
- * ADMIN group membership bypasses both the @auth group check and the serviceAccountPermitted gate.
- */
-export function isAdminCaller({ appid, groups = [] }) {
-  return appid === authEntities.ADMIN || groups.includes(authEntities.ADMIN)
 }
 
 /**
@@ -131,27 +123,20 @@ function isServiceAccountPermitted(schema, typeName) {
 }
 
 /**
- * Checks that the requester's appid or groups satisfy the given @auth allow-list.
+ * Checks that the requester's authorised entity satisfies the given @auth allow-list.
+ *
+ * @param {string} serviceName the authorised service name from `getAuthorisedEntity`
+ * @param {string[]} allowedServices the list of services that can access this data
  * @throws {Unauthorized} if access is not granted
  */
-export function checkAuthEntity({ appid, groups = [] }, allowedEntities) {
-  if (isAdminCaller({ appid, groups })) {
+export function checkAuthEntity(serviceName, allowedServices) {
+  if (['ADMIN', ...allowedServices].includes(serviceName)) {
     return
   }
 
-  // the allowedEntities are human-readable names for the AD app or group IDs,
-  // so we need to map them to the actual IDs for comparison
-  const allowedEntityIds = (allowedEntities ?? []).map((entity) => authEntities[entity])
-
-  if (appid && allowedEntityIds.includes(appid)) {
-    return
-  }
-
-  // check if the requester's groups intersect with the allowed groups
-  const hasAccess = allowedEntityIds.some((entityId) => groups.includes(entityId))
-  if (!hasAccess) {
-    throw new Unauthorized('Authorization failed, you are not in the correct AD groups')
-  }
+  throw new Unauthorized(
+    'Authorization failed, requester is not able to access this part of the schema'
+  )
 }
 
 /**
@@ -187,7 +172,7 @@ function getUserAccessType(authContext) {
 
 /**
  * Checks that the requester's end-user access type (internal/external) satisfies the given
- * @auth allow-list.
+ * `@auth` allow-list.
  * Unlike `checkAuthEntity`, ADMIN group membership does not bypass this check - the restriction is
  * on the type of end user, not the calling system.
  * A field with no `userType` restriction, or one including `ALL`, is unaffected.
@@ -204,6 +189,13 @@ export function checkUserAccess(authContext, allowedAccess) {
   }
 }
 
+/**
+ * Transforms the GraphQL schema description to enforce the `@auth` directive behaviour on types
+ * and fields.
+ *
+ * @param {*} schema the GraphQL schema
+ * @returns the compiled/codified/runnable equivalent of the behaviour described in the schema
+ */
 export function authDirectiveTransformer(schema) {
   const typeDirectiveArgumentMaps = {}
   const directiveName = 'auth'
@@ -223,13 +215,11 @@ export function authDirectiveTransformer(schema) {
 
       if (authDirective) {
         fieldConfig.resolve = function (source, args, context, info) {
-          const auth = context.auth
-          const requesterGroups = auth.groups || []
-          checkAuthEntity(auth, authDirective.requires)
+          checkAuthEntity(context.auth.serviceName, authDirective.requires)
           checkServiceAccountAccess(
             isServiceAccount(context.authContext),
             isServiceAccountPermitted(schema, typeName),
-            isAdminCaller({ appid: auth.appid, groups: requesterGroups })
+            context.auth.entityId === authEntities.ADMIN
           )
           checkUserAccess(context.authContext, authDirective.userType)
           return resolve(source, args, context, info)

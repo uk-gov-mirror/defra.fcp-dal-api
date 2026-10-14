@@ -21,21 +21,24 @@ It is implemented as a schema transformer (`authDirectiveTransformer`) in
 
 ### `requires` - which consumer entities can call this field
 
-`requires` names one or more Entra app-reg or AD group IDs configured in `app/config.js`
-(`auth.entities.{ADMIN,CONSOLIDATED_VIEW,SINGLE_FRONT_DOOR,SFI_REFORM}`), each mapping to an Azure AD
-Entra group ID / entity ID for a consuming system (Consolidated View, Single Front Door, Grants
-Platform, etc).
+`requires` names one or more services (configured in `app/config.js`, the
+`auth.entities.{ADMIN,CONSOLIDATED_VIEW,...}`), each mapping an Entra app-reg or AD group ID
+(referred to as the entity ID) to a consuming system name (Consolidated View, Single Front Door,
+Grants Platform, etc).
 
 This comes from a **different** header than the ones in [DAL Authentication](./auth): the caller's
-group membership is read from the `groups` claim of the Entra ID JWT sent in the standard
-`Authorization: Bearer <token>` header, verified by `getAuth()` in `authenticate.js`.
-Authorization first compares the token's `appid` claim to the configured IDs, then falls back to the
-existing `groups` claim check. This identifies _which system_ is calling the DAL.
+authorised identity is read from the `appid`, `azp`, or `groups` claim of the Entra ID JWT sent in
+the standard `Authorization: Bearer <token>` header, verified by `getAuthorisedEntity()` in
+`authenticate.js`.
+Authorization first compares the token's `appid`/`azp` claim to the configured IDs, then falls back
+to checking the `groups` claim for the first match.
+This identifies _which system_ is calling the DAL.
 The end user is identified by one-of `email`/`x-forwarded-authorization`/`service-account` headers.
-Every field-level `@auth` check runs against the `appid` and `groups` claims in `context.auth`.
+Every field-level `@auth` check is made against the service name (`context.auth.serviceName`),
+which was assigned by matching the entity ID.
 
-A caller with the configured `ADMIN` app-reg (or group) ID bypasses the `requires` check entirely
-(and the `serviceAccountPermitted` check below), regardless of what groups the field lists.
+A caller with the configured `ADMIN` app-reg (or group) ID is ALWAYS allowed, irrespective of the
+services listed by `requires`.
 
 A field with no `@auth` directive at all has no group restriction - anyone who can reach the DAL
 can call it (e.g. `Query.referenceData`).
@@ -97,9 +100,8 @@ An admin service account can call any `@auth`-protected field, mutations include
 
 `authDirectiveTransformer` wraps the field's resolver with three checks, in order:
 
-1. `checkAuthEntity(auth, requires)` - throws `Unauthorized` if the token's `appid`/`group` does
-   not match an allowed entity and the caller is not an `ADMIN` or any service listed in
-   `requires`.
+1. `checkAuthEntity(serviceName, allowedServices)` - throws `Unauthorized` if the `serviceName`
+   does not match one listed by `requires` in the schema, and the caller is not an `ADMIN`.
 2. `checkServiceAccountAccess(isServiceAccount, serviceAccountPermitted, isAdmin)` - throws
    `Unauthorized` if the caller is a service account, `serviceAccountPermitted` is `false`, and the
    caller is not `ADMIN`.
@@ -114,11 +116,11 @@ query (sibling fields) still resolves normally.
 
 Setting `DISABLE_AUTH=true` skips `@auth` enforcement entirely:
 
-- `getRequestingService` returns a placeholder value
 - a default app-reg ID is used (as there is no token to derive the `appid`/`groups` claim from)
+- `serviceName` is set to placeholder value
 - and `authDirectiveTransformer` is not applied to the schema at all
 
 This is only ever allowed when `cdp.env` is `dev` - `schema.js` throws at startup if auth is
-disabled anywhere else, so it cannot be accidentally left on in a real environment.
+disabled anywhere else, so auth cannot be accidentally disabled in a real environment.
 
 [< back to Homepage](./homepage)

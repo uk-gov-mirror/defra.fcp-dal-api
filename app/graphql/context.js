@@ -1,5 +1,5 @@
 import { createAuditTrail } from '../audit/audit-trail.js'
-import { getAuth, getRequestingService } from '../auth/authenticate.js'
+import { getAuthorisedEntity } from '../auth/authenticate.js'
 import { defraIdContext } from '../auth/defra-id.js'
 import { endUserAuthContext } from '../auth/end-user-auth-context.js'
 import { config } from '../config.js'
@@ -15,17 +15,13 @@ import { logger } from '../logger/logger.js'
 import { db } from '../mongo.js'
 
 export async function context({ request }) {
-  const auth = await getAuth(request, new JWKS())
-
-  // normalise the appid claim (translate azp v2.0 token field to v1.0 for consistency)
-  auth.appid = auth.appid ?? auth.azp
-
-  const requestingService = getRequestingService(auth.groups ?? [])
+  const auth = await getAuthorisedEntity(request, new JWKS()) // TODO: make JWKS a singleton
+  const requestingService = auth.serviceName
   request.requestingService = requestingService
 
   const requestLogger = logger.child({
     traceId: request.traceId,
-    ...(requestingService && { tenant: { id: requestingService } })
+    tenant: { id: requestingService }
   })
 
   const authContext = endUserAuthContext(request)
@@ -72,7 +68,7 @@ export async function context({ request }) {
       hitachiPayments: new HitachiPayments({
         logger: requestLogger,
         audit: {
-          requestedSystem: auth.appid,
+          requestedSystem: auth.entityId,
           requesterId: request.headers.email,
           correlationId: request.traceId
         }
