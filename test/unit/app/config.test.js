@@ -271,12 +271,12 @@ describe('config', () => {
 
     it('should have authEntityServiceName linked to the entity ID (app-reg or group)', () => {
       expect(authEntityServiceName).toEqual({
-        'some-entity-id': null,
-        'consolidated-view-entity-id': 'consolidated-view',
-        'land-grants-api-entity-id': 'land-grants-api',
-        'sfi-reform-entity-id': 'grants-platform',
-        'single-front-door-entity-id': 'single-front-door',
-        'land-app-tech-spikes-entity-id': 'land-app-tech-spikes'
+        'some-entity-id': 'ADMIN',
+        'consolidated-view-entity-id': 'CONSOLIDATED_VIEW',
+        'land-grants-api-entity-id': 'LAND_GRANTS_API',
+        'sfi-reform-entity-id': 'SFI_REFORM',
+        'single-front-door-entity-id': 'SINGLE_FRONT_DOOR',
+        'land-app-tech-spikes-entity-id': 'LAND_APP_TECH_SPIKES'
       })
     })
 

@@ -355,12 +355,12 @@ config.validate({ allowed: 'strict' })
 
 export const authEntities = config.get('auth.entities')
 export const authEntityServiceName = {
-  [authEntities.ADMIN]: null,
-  [authEntities.CONSOLIDATED_VIEW]: 'consolidated-view',
-  [authEntities.LAND_GRANTS_API]: 'land-grants-api',
-  [authEntities.SFI_REFORM]: 'grants-platform',
-  [authEntities.SINGLE_FRONT_DOOR]: 'single-front-door',
-  [authEntities.LAND_APP_TECH_SPIKES]: 'land-app-tech-spikes'
+  [authEntities.ADMIN]: 'ADMIN',
+  [authEntities.CONSOLIDATED_VIEW]: 'CONSOLIDATED_VIEW',
+  [authEntities.LAND_GRANTS_API]: 'LAND_GRANTS_API',
+  [authEntities.SFI_REFORM]: 'SFI_REFORM',
+  [authEntities.SINGLE_FRONT_DOOR]: 'SINGLE_FRONT_DOOR',
+  [authEntities.LAND_APP_TECH_SPIKES]: 'LAND_APP_TECH_SPIKES'
 }
 
 export const decodeBase64Config = (value) => Buffer.from(value, 'base64').toString('utf-8').trim()

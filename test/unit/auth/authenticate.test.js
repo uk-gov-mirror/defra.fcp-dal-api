@@ -304,27 +304,25 @@ describe('authenticate', () => {
       const landAppTechSpikesApiGroupId = config.get('auth.entities.LAND_APP_TECH_SPIKES')
 
       it('should return the service name for a single recognised group', () => {
-        expect(getRequestingService([consolidatedViewGroupId])).toBe('consolidated-view')
-        expect(getRequestingService([sfiReformGroupId])).toBe('grants-platform')
-        expect(getRequestingService([singleFrontDoorGroupId])).toBe('single-front-door')
-        expect(getRequestingService([landGrantsApiGroupId])).toBe('land-grants-api')
-        expect(getRequestingService([landAppTechSpikesApiGroupId])).toBe('land-app-tech-spikes')
+        expect(getRequestingService([consolidatedViewGroupId])).toBe('CONSOLIDATED_VIEW')
+        expect(getRequestingService([sfiReformGroupId])).toBe('SFI_REFORM')
+        expect(getRequestingService([singleFrontDoorGroupId])).toBe('SINGLE_FRONT_DOOR')
+        expect(getRequestingService([landGrantsApiGroupId])).toBe('LAND_GRANTS_API')
+        expect(getRequestingService([landAppTechSpikesApiGroupId])).toBe('LAND_APP_TECH_SPIKES')
       })
 
       it('should return null when the only group present is ADMIN', () => {
-        expect(getRequestingService([adminGroupId])).toBeNull()
+        expect(getRequestingService([adminGroupId])).toBe('ADMIN')
       })
 
-      it('should return the first group in the array that maps to a service, skipping ADMIN', () => {
-        expect(getRequestingService([adminGroupId, sfiReformGroupId])).toBe('grants-platform')
+      it('should return the first group in the array that maps to a service', () => {
+        expect(getRequestingService([adminGroupId, sfiReformGroupId])).toBe('ADMIN')
       })
 
       it('should honour input array order over any fixed preference between services', () => {
-        expect(getRequestingService([sfiReformGroupId, consolidatedViewGroupId])).toBe(
-          'grants-platform'
-        )
+        expect(getRequestingService([sfiReformGroupId, consolidatedViewGroupId])).toBe('SFI_REFORM')
         expect(getRequestingService([consolidatedViewGroupId, sfiReformGroupId])).toBe(
-          'consolidated-view'
+          'CONSOLIDATED_VIEW'
         )
       })
 
