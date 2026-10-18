@@ -514,37 +514,35 @@ describe('auditPlugin', () => {
     })
   })
 
-  describe('sourceSystem', () => {
-    test('audit record contains the dummy unauthorised entity values', async () => {
-      const publish = vi.fn()
-      const plugin = auditPlugin({ publish })
+  test('audit record contains dummy entity values when auth fails', async () => {
+    const publish = vi.fn()
+    const plugin = auditPlugin({ publish })
 
-      const contextValue = {
-        ...baseContextValue,
-        auth: {
-          entityId: 'no-entityId--no-approved-app-or-groups',
-          serviceName: 'unknown-unauthorised-service'
-        },
-        auditTrail: fakeAuditTrail({
-          business: { entities: [{ entity: 'payment-list', action: 'read', entityid: 'frn-1' }] }
-        })
-      }
-      const listener = await plugin.requestDidStart()
-      const requestContext = { operationName: 'GetBusiness', contextValue, errors: undefined }
-      await listener.willSendResponse(requestContext)
+    const contextValue = {
+      ...baseContextValue,
+      auth: {
+        entityId: 'no-entityId--no-approved-app-or-groups',
+        serviceName: 'unknown-unauthorised-service'
+      },
+      auditTrail: fakeAuditTrail({
+        business: { entities: [{ entity: 'payment-list', action: 'read', entityid: 'frn-1' }] }
+      })
+    }
+    const listener = await plugin.requestDidStart()
+    const requestContext = { operationName: 'GetBusiness', contextValue, errors: undefined }
+    await listener.willSendResponse(requestContext)
 
-      expect(publish).toHaveBeenCalledWith(
-        expect.objectContaining({
-          audit: expect.objectContaining({
-            details: expect.objectContaining({
-              sourceSystem: 'unknown-unauthorised-service',
-              sourceSystemEntityId: 'no-entityId--no-approved-app-or-groups'
-            })
+    expect(publish).toHaveBeenCalledWith(
+      expect.objectContaining({
+        audit: expect.objectContaining({
+          details: expect.objectContaining({
+            sourceSystem: 'unknown-unauthorised-service',
+            sourceSystemEntityId: 'no-entityId--no-approved-app-or-groups'
           })
-        }),
-        baseContextValue.requestLogger
-      )
-    })
+        })
+      }),
+      baseContextValue.requestLogger
+    )
   })
 
   describe('serviceAccount', () => {

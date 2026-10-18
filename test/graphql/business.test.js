@@ -630,7 +630,6 @@ describe('Query.business internal', () => {
         }
       }
     })
-
     expect(nock.isDone()).toBe(true)
   })
 
@@ -825,7 +824,6 @@ describe('Query.business internal', () => {
         }
       }
     })
-
     expect(nock.isDone()).toBe(true)
   })
 
@@ -1004,7 +1002,7 @@ describe('Query.business internal', () => {
     expect(result.data.business).toBeNull()
     expect(result.errors).toHaveLength(1)
     expect(result.errors[0]).toMatchObject({
-      message: 'Authorization failed, you are not in the correct AD groups',
+      message: 'Authorization failed, requester is not able to access this part of the schema',
       extensions: { code: 'UNAUTHORIZED', http: { status: 401 } }
     })
   })
@@ -1035,8 +1033,8 @@ describe('Query.business internal', () => {
       [config.get(`auth.entities.${group}`)]
     )
 
-    expect(internalKitsGateway.isDone()).toBe(true)
     expect(result.errors).toBeUndefined()
     expect(result.data.business.sbi).toBe('123456789')
+    expect(internalKitsGateway.isDone()).toBe(true)
   })
 })

@@ -148,7 +148,7 @@ describe('internalUser.permittedFunctions', () => {
     expect(result.data.internalUser).toBeNull()
     expect(result.errors).toHaveLength(1)
     expect(result.errors[0]).toMatchObject({
-      message: 'Authorization failed, you are not in the correct AD groups',
+      message: 'Authorization failed, requester is not able to access this part of the schema',
       extensions: { code: 'UNAUTHORIZED', http: { status: 401 } }
     })
   })
@@ -164,7 +164,7 @@ describe('internalUser.permittedFunctions', () => {
     expect(result.data.internalUser).toBeNull()
     expect(result.errors).toHaveLength(1)
     expect(result.errors[0]).toMatchObject({
-      message: 'Authorization failed, you are not in the correct AD groups',
+      message: 'Authorization failed, requester is not able to access this part of the schema',
       extensions: { code: 'UNAUTHORIZED', http: { status: 401 } }
     })
   })

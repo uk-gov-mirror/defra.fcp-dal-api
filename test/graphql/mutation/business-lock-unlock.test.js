@@ -231,7 +231,6 @@ describe('business state mutations', () => {
         reason: 'test'
       }
 
-      // <<<<<<< HEAD
       v1.post('/organisation/organisationId/deactivate', {
         partyNoteType: 'DeactivateOrganisation',
         reason: 'test'
@@ -244,16 +243,6 @@ describe('business state mutations', () => {
           deactivated: false
         }
       })
-      // =======
-      //     // act
-      //     const result = await makeTestQuery(
-      //       query,
-      //       { 'x-forwarded-authorization': signDefraIdToken({ contactId: '1234567890' }) },
-      //       false,
-      //       { input: { sbi: '123456789', reason: 'test' } },
-      //       [config.get('auth.entities.SINGLE_FRONT_DOOR')]
-      //     )
-      // >>>>>>> 700bf2eb (refactor: rename auth group code to entity)
 
       const query = `
         mutation DeactivateBusiness ($input: UpdateBusinessDeactivateInput!) {

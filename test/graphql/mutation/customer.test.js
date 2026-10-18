@@ -535,7 +535,7 @@ describe('customer mutations', () => {
 
       // assert
       expect(result.errors[0].message).toBe(
-        'Authorization failed, you are not in the correct AD groups'
+        'Authorization failed, requester is not able to access this part of the schema'
       )
       expect(kits.isDone()).toBe(false)
     })
@@ -790,7 +790,7 @@ describe('customer mutations', () => {
 
       // assert
       expect(result.errors[0].message).toBe(
-        'Authorization failed, you are not in the correct AD groups'
+        'Authorization failed, requester is not able to access this part of the schema'
       )
       expect(kits.isDone()).toBe(false)
     })
@@ -1187,7 +1187,6 @@ describe('customer mutations', () => {
         .reply(200, { _data: 'Success' })
 
       const result = await makeExternalQuery()
-
       expect(result).toEqual({
         data: {
           sendConfirmEmailAddressEmail: {
