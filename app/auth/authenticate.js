@@ -2,7 +2,7 @@ import { getDirective, MapperKind, mapSchema } from '@graphql-tools/utils'
 import { Unit } from 'aws-embedded-metrics'
 import { defaultFieldResolver } from 'graphql'
 import { decodeProtectedHeader, jwtVerify } from 'jose'
-import { authEntities, authEntityServiceName, config } from '../config.js'
+import { authorisedEntities, config } from '../config.js'
 import { Unauthorized } from '../errors/graphql.js'
 import { DAL_REQUEST_AUTHENTICATION_001 } from '../logger/codes.js'
 import { logger } from '../logger/logger.js'
@@ -12,17 +12,22 @@ const unauthedAppid = config.get('auth.disabled')
   ? 'auth-disabled-no-entityId'
   : 'no-entityId--no-auth-provided'
 const unknownService = 'unknown-unauthorised-service'
-const allowedEntityIds = Object.values(authEntities)
 
 const identifyService = (appid, groups) => {
-  return (
-    allowedEntityIds.find((allowedId) => allowedId === appid) ??
-    // the first group that matches an allowed entity, if any
-    (Array.isArray(groups) && groups.length
-      ? allowedEntityIds.find((entity) => groups.includes(entity))
-      : undefined) ??
-    'no-entityId--no-approved-app-or-groups'
-  )
+  const entityFromAppId = authorisedEntities[appid]
+  if (entityFromAppId) {
+    return entityFromAppId
+  }
+
+  const entityMatchingGroup =
+    Array.isArray(groups) &&
+    groups.length &&
+    Object.keys(authorisedEntities).find((allowedId) => groups.includes(allowedId))
+  if (entityMatchingGroup) {
+    return authorisedEntities[entityMatchingGroup]
+  }
+
+  return { entityId: 'no-entityId--no-approved-app-or-groups', serviceName: unknownService }
 }
 
 /**
@@ -33,7 +38,9 @@ const identifyService = (appid, groups) => {
  *
  * @param {*} request the incoming HTTP request
  * @param {*} jwkDatasource the JWKS keystore for verifying the JWT
- * @returns {Promise<{entityId: string, serviceName: string}>} the consumer ID and serviceName
+ * @returns {Promise<{entityId: string, authName: string, serviceName: string}>}
+ *  the matching `entityId` from the token, `authName` for the `@auth` directive, and `serviceName`
+ *  for the audit/metrics identifier
  * @throws {Unauthorized} if the token is invalid or expired
  */
 export async function getAuthorisedEntity(request, jwkDatasource) {
@@ -75,9 +82,7 @@ export async function getAuthorisedEntity(request, jwkDatasource) {
       }
     })
 
-    const entityId = identifyService(verified.appid ?? verified.azp, verified.groups)
-
-    return { entityId, serviceName: authEntityServiceName[entityId] ?? unknownService }
+    return identifyService(verified.appid ?? verified.azp, verified.groups)
   } catch (error) {
     if (
       error.name === 'TokenExpiredError' ||
@@ -125,12 +130,12 @@ function isServiceAccountPermitted(schema, typeName) {
 /**
  * Checks that the requester's authorised entity satisfies the given @auth allow-list.
  *
- * @param {string} serviceName the authorised service name from `getAuthorisedEntity`
+ * @param {string} authName the authorisation name from `getAuthorisedEntity`
  * @param {string[]} allowedServices the list of services that can access this data
  * @throws {Unauthorized} if access is not granted
  */
-export function checkAuthEntity(serviceName, allowedServices) {
-  if (['ADMIN', ...allowedServices].includes(serviceName)) {
+export function checkAuthEntity(authName, allowedServices) {
+  if (['ADMIN', ...allowedServices].includes(authName)) {
     return
   }
 
@@ -215,11 +220,11 @@ export function authDirectiveTransformer(schema) {
 
       if (authDirective) {
         fieldConfig.resolve = function (source, args, context, info) {
-          checkAuthEntity(context.auth.serviceName, authDirective.requires)
+          checkAuthEntity(context.auth.authName, authDirective.requires)
           checkServiceAccountAccess(
             isServiceAccount(context.authContext),
             isServiceAccountPermitted(schema, typeName),
-            context.auth.entityId === authEntities.ADMIN
+            context.auth.authName === 'ADMIN'
           )
           checkUserAccess(context.authContext, authDirective.userType)
           return resolve(source, args, context, info)

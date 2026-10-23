@@ -1,7 +1,7 @@
 import { buildSchema, findBreakingChanges, graphql, GraphQLError } from 'graphql'
 import jwt from 'jsonwebtoken'
 import { generateKeyPairSync } from 'node:crypto'
-import { beforeEach, describe, expect, it, test, vi } from 'vitest'
+import { afterEach, beforeEach, describe, expect, it, test, vi } from 'vitest'
 import { config } from '../../../app/config.js'
 import { Unauthorized } from '../../../app/errors/graphql.js'
 
@@ -21,9 +21,9 @@ const tokenPayload = {
   aud: 'api://appid',
   iss: 'https://sts.windows.net/appid/',
   aio: 'aio',
-  appid: config.get('auth.entities.SINGLE_FRONT_DOOR'),
+  appid: config.get('auth.entities.SINGLE_FRONT_DOOR.entityId'),
   appidacr: '1',
-  groups: [config.get('auth.entities.SINGLE_FRONT_DOOR')],
+  groups: [config.get('auth.entities.SINGLE_FRONT_DOOR.entityId')],
   idp: 'https://sts.windows.net/appid/',
   oid: 'oid',
   rh: 'rh',
@@ -81,10 +81,15 @@ describe('authenticate', () => {
     })
 
     describe('when auth is enabled', () => {
-      it('should return default auth details when request has no auth', async () => {
+      beforeEach(() => {
         config.set('auth.disabled', false) // temporarily set auth to enabled for this test
-        const { getAuthorisedEntity } = await import('../../../app/auth/authenticate.js?r=3')
+      })
+      afterEach(() => {
         config.set('auth.disabled', true) // reset to original state after import
+      })
+
+      it('should return default auth details when request has no auth', async () => {
+        const { getAuthorisedEntity } = await import('../../../app/auth/authenticate.js?r=3')
 
         expect(await getAuthorisedEntity({})).toEqual({
           entityId: 'no-entityId--no-auth-provided',
@@ -98,8 +103,9 @@ describe('authenticate', () => {
           const auth = await getAuthorisedEntity(mockRequest(token), mockJWKSDataSource)
 
           expect(auth).toEqual({
-            entityId: config.get('auth.entities.SINGLE_FRONT_DOOR'),
-            serviceName: 'SINGLE_FRONT_DOOR'
+            entityId: config.get('auth.entities.SINGLE_FRONT_DOOR.entityId'),
+            authName: 'SINGLE_FRONT_DOOR',
+            serviceName: 'single-front-door'
           })
           expect(mockPublicKeyFunc).toHaveBeenCalledWith('mock-key-id-123')
           expect(info).toHaveBeenCalledTimes(1)
@@ -114,8 +120,8 @@ describe('authenticate', () => {
               tenant: {
                 message: expect.stringMatching(
                   new RegExp(
-                    `{"appid":"${config.get('auth.entities.SINGLE_FRONT_DOOR')}","aud":"api://appid","oid":"oid",` +
-                      `"sub":"sub","tid":"tid","groups":\\["${config.get('auth.entities.SINGLE_FRONT_DOOR')}"\\],"roles":\\["role-id"\\],"azp":"azp-id",` +
+                    `{"appid":"${config.get('auth.entities.SINGLE_FRONT_DOOR.entityId')}","aud":"api://appid","oid":"oid",` +
+                      `"sub":"sub","tid":"tid","groups":\\["${config.get('auth.entities.SINGLE_FRONT_DOOR.entityId')}"\\],"roles":\\["role-id"\\],"azp":"azp-id",` +
                       '"iat":[0-9]+,"exp":[0-9]+,"ver":"1\\.0"}'
                   )
                 )
@@ -126,7 +132,7 @@ describe('authenticate', () => {
       })
 
       test('matches the azp claim when the appid is not available (i.e. a v2 token)', async () => {
-        const entityId = config.get('auth.entities.SINGLE_FRONT_DOOR')
+        const entityId = config.get('auth.entities.SINGLE_FRONT_DOOR.entityId')
         mockPublicKeyFunc.mockResolvedValue(publicKey)
 
         expect(
@@ -134,11 +140,15 @@ describe('authenticate', () => {
             mockRequest(createConsumerToken({ azp: entityId })),
             mockJWKSDataSource
           )
-        ).toEqual({ entityId, serviceName: 'SINGLE_FRONT_DOOR' })
+        ).toEqual({
+          entityId: config.get('auth.entities.SINGLE_FRONT_DOOR.entityId'),
+          authName: 'SINGLE_FRONT_DOOR',
+          serviceName: 'single-front-door'
+        })
       })
 
       test('matches an authorised group when neither appid claim is an authorised entity', async () => {
-        const entityId = config.get('auth.entities.SINGLE_FRONT_DOOR')
+        const entityId = config.get('auth.entities.SINGLE_FRONT_DOOR.entityId')
         mockPublicKeyFunc.mockResolvedValue(publicKey)
 
         expect(
@@ -151,12 +161,16 @@ describe('authenticate', () => {
             ),
             mockJWKSDataSource
           )
-        ).toEqual({ entityId, serviceName: 'SINGLE_FRONT_DOOR' })
+        ).toEqual({
+          entityId,
+          authName: 'SINGLE_FRONT_DOOR',
+          serviceName: 'single-front-door'
+        })
       })
 
       test('prefers the ADMIN group as the authorised entity, if available', async () => {
-        const entityId = config.get('auth.entities.SINGLE_FRONT_DOOR')
-        const admin = config.get('auth.entities.ADMIN')
+        const entityId = config.get('auth.entities.SINGLE_FRONT_DOOR.entityId')
+        const admin = config.get('auth.entities.ADMIN.entityId')
         mockPublicKeyFunc.mockResolvedValue(publicKey)
 
         expect(
@@ -169,7 +183,7 @@ describe('authenticate', () => {
             ),
             mockJWKSDataSource
           )
-        ).toEqual({ entityId: admin, serviceName: 'ADMIN' })
+        ).toEqual({ entityId: admin, authName: 'ADMIN', serviceName: 'admin' })
       })
 
       test('returns unauthorised auth details if token cannot be decoded', async () => {
@@ -333,8 +347,8 @@ describe('authenticate', () => {
     })
 
     describe('service account gating', () => {
-      const sfdEntityId = config.get('auth.entities.SINGLE_FRONT_DOOR')
-      const adminEntityId = config.get('auth.entities.ADMIN')
+      const sfdEntityId = config.get('auth.entities.SINGLE_FRONT_DOOR.entityId')
+      const adminEntityId = config.get('auth.entities.ADMIN.entityId')
       const rootValue = {
         gatedQueryFieldDefault: 'a',
         gatedQueryFieldExplicitlyClosed: 'b',
@@ -354,11 +368,12 @@ describe('authenticate', () => {
       const serviceAccountContext = (entityId) => ({
         auth: {
           entityId,
+          authName: entityId === adminEntityId ? 'ADMIN' : 'SINGLE_FRONT_DOOR',
           serviceName:
             entityId === adminEntityId
-              ? 'ADMIN'
+              ? 'admin'
               : entityId === sfdEntityId
-                ? 'SINGLE_FRONT_DOOR'
+                ? 'single-front-door'
                 : 'unknown-unauthorised-service'
         },
         authContext: { serviceAccount: 'service-account@example.com' }
@@ -379,7 +394,11 @@ describe('authenticate', () => {
 
       it('allows a non-service-account caller with the required entity ID', async () => {
         const result = await run('gatedQueryFieldDefault', {
-          auth: { entityId: sfdEntityId, serviceName: 'SINGLE_FRONT_DOOR' },
+          auth: {
+            entityId: sfdEntityId,
+            authName: 'SINGLE_FRONT_DOOR',
+            serviceName: 'single-front-door'
+          },
           authContext: {}
         })
         expect(result.errors).toBeUndefined()
@@ -422,8 +441,8 @@ describe('authenticate', () => {
     })
 
     describe('user access gating', () => {
-      const sfdEntityId = config.get('auth.entities.SINGLE_FRONT_DOOR')
-      const adminEntityId = config.get('auth.entities.ADMIN')
+      const sfdEntityId = config.get('auth.entities.SINGLE_FRONT_DOOR.entityId')
+      const adminEntityId = config.get('auth.entities.ADMIN.entityId')
       const rootValue = { gatedQueryFieldInternalOnly: 'a' }
 
       const run = (contextValue) =>
@@ -436,7 +455,11 @@ describe('authenticate', () => {
 
       it('allows an internal caller', async () => {
         const result = await run({
-          auth: { entityId: sfdEntityId, serviceName: 'SINGLE_FRONT_DOOR' },
+          auth: {
+            entityId: sfdEntityId,
+            authName: 'SINGLE_FRONT_DOOR',
+            serviceName: 'single-front-door'
+          },
           authContext: { internalAuthHeader: 'user@defra.gov.uk' }
         })
         expect(result.errors).toBeUndefined()
@@ -445,7 +468,11 @@ describe('authenticate', () => {
 
       it('denies an external caller', async () => {
         const result = await run({
-          auth: { entityId: sfdEntityId, serviceName: 'SINGLE_FRONT_DOOR' },
+          auth: {
+            entityId: sfdEntityId,
+            authName: 'SINGLE_FRONT_DOOR',
+            serviceName: 'single-front-door'
+          },
           authContext: { externalAuthHeader: 'Bearer token' }
         })
         expect(result.errors?.[0].message).toMatch(/not available to this user type/)
@@ -453,7 +480,11 @@ describe('authenticate', () => {
 
       it('denies a service account', async () => {
         const result = await run({
-          auth: { entityId: sfdEntityId, serviceName: 'SINGLE_FRONT_DOOR' },
+          auth: {
+            entityId: sfdEntityId,
+            authName: 'SINGLE_FRONT_DOOR',
+            serviceName: 'single-front-door'
+          },
           authContext: { serviceAccount: 'service-account@example.com' }
         })
         expect(result.errors?.[0].message).toMatch(/not available to this user type/)
@@ -461,7 +492,7 @@ describe('authenticate', () => {
 
       it('denies an ADMIN external caller', async () => {
         const result = await run({
-          auth: { entityId: adminEntityId, serviceName: 'ADMIN' },
+          auth: { entityId: adminEntityId, authName: 'ADMIN', serviceName: 'admin' },
           authContext: { externalAuthHeader: 'Bearer token' }
         })
         expect(result.errors?.[0].message).toMatch(/not available to this user type/)
@@ -469,7 +500,7 @@ describe('authenticate', () => {
 
       it('allows an ADMIN internal caller', async () => {
         const result = await run({
-          auth: { entityId: adminEntityId, serviceName: 'ADMIN' },
+          auth: { entityId: adminEntityId, authName: 'ADMIN', serviceName: 'admin' },
           authContext: { internalAuthHeader: 'user@defra.gov.uk' }
         })
         expect(result.errors).toBeUndefined()
@@ -478,7 +509,7 @@ describe('authenticate', () => {
 
       it('denies an ADMIN service account caller when an internal user is required', async () => {
         const result = await run({
-          auth: { entityId: adminEntityId, serviceName: 'ADMIN' },
+          auth: { entityId: adminEntityId, authName: 'ADMIN', serviceName: 'admin' },
           authContext: { serviceAccount: 'service-account@example.com' }
         })
         expect(result.errors?.[0].message).toMatch(/not available to this user type/)

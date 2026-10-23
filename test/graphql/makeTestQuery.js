@@ -1,5 +1,5 @@
 import { graphql } from 'graphql'
-import { authEntities, authEntityServiceName } from '../../app/config.js'
+import { authorisedEntities } from '../../app/config.js'
 import { context } from '../../app/graphql/context.js'
 import { createSchema } from '../../app/graphql/schema.js'
 
@@ -13,9 +13,11 @@ export const makeTestQuery = async (
   dropDbOnCompletion = true
 ) => {
   const ctx = await context({ request: { headers: headers ?? defaultHeaders } })
-  const entityId = isAuthenticated
-    ? authEntities.ADMIN
-    : Object.values(authEntities).find((allowedId) => authorizedEntityIds.includes(allowedId))
+  const entity = isAuthenticated
+    ? Object.values(authorisedEntities).find(({ authName }) => authName === 'ADMIN')
+    : Object.values(authorisedEntities).find(({ entityId }) =>
+        authorizedEntityIds.includes(entityId)
+      )
   try {
     return await graphql({
       source,
@@ -23,8 +25,9 @@ export const makeTestQuery = async (
       contextValue: {
         ...ctx,
         auth: {
-          entityId,
-          serviceName: authEntityServiceName[entityId] ?? 'unknown-unauthorised-service'
+          entityId: entity?.entityId,
+          authName: entity?.authName,
+          serviceName: entity?.serviceName ?? 'unknown-unauthorised-service'
         }
       },
       variableValues

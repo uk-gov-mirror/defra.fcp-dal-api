@@ -1030,7 +1030,7 @@ describe('Query.business internal', () => {
       null,
       false,
       {},
-      [config.get(`auth.entities.${group}`)]
+      [config.get(`auth.entities.${group}.entityId`)]
     )
 
     expect(result.errors).toBeUndefined()

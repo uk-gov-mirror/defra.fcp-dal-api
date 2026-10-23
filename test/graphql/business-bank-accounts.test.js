@@ -136,7 +136,7 @@ describe('business bankAccounts', () => {
       mockExistingAccounts([{ number: '1234', currency: 'GBP' }])
 
       const result = await makeTestQuery(query, null, false, {}, [
-        config.get(`auth.entities.${entity}`)
+        config.get(`auth.entities.${entity}.entityId`)
       ])
 
       expect(nock.isDone()).toBe(true)
@@ -151,7 +151,7 @@ describe('business bankAccounts', () => {
     mockOrganisationSearch(v1)
 
     const result = await makeTestQuery(query, null, false, {}, [
-      config.get('auth.entities.CONSOLIDATED_VIEW')
+      config.get('auth.entities.CONSOLIDATED_VIEW.entityId')
     ])
 
     expect(result.data.business.sbi).toBe('123456789')

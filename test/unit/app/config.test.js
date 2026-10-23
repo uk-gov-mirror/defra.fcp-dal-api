@@ -1,5 +1,5 @@
 import { afterAll, beforeEach, describe, expect, it, vi } from 'vitest'
-import { authEntities, authEntityServiceName, decodeBase64Config } from '../../../app/config.js'
+import { decodeBase64Config } from '../../../app/config.js'
 
 const existingEnvVars = process.env
 
@@ -45,7 +45,7 @@ describe('config', () => {
     expect(config.get('port')).toBe(3000)
     expect(config.get('logLevel')).toBe('info')
     expect(config.get('auth.disabled')).toBe(true)
-    expect(config.get('auth.entities.ADMIN')).toBe(null)
+    expect(config.get('auth.entities.ADMIN.entityId')).toBe(null)
     expect(config.get('graphqlDashboardEnabled')).toBe(false)
     expect(config.get('serviceVersion')).toBe(null)
     expect(config.get('kits.requestPageSize')).toBe(100)
@@ -73,13 +73,19 @@ describe('config', () => {
     process.env.OIDC_JWKS_TIMEOUT_MS = '5000'
     process.env.DEFRA_ID_WELL_KNOWN_URL = 'https://example.com/defra-id-well-known'
     process.env.DEFRA_ID_TIMEOUT_MS = '4500'
+    process.env.ADMIN_ENTITY_ID = 'some-entity-id'
+    process.env.CONSOLIDATED_VIEW_ENTITY_ID = 'consolidated-view-entity-id'
+    process.env.SINGLE_FRONT_DOOR_ENTITY_ID = 'single-front-door-entity-id'
+    process.env.SFI_REFORM_ENTITY_ID = 'sfi-reform-entity-id'
+    process.env.LAND_GRANTS_API_ENTITY_ID = 'land-grants-api-entity-id'
+    process.env.LAND_APP_TECH_SPIKES_ENTITY_ID = 'land-app-tech-spikes-entity-id'
     process.env.DISABLE_AUTH = 'false'
-    process.env.ADMIN_ENTITY_ID = 'admin-group-id'
-    process.env.CONSOLIDATED_VIEW_ENTITY_ID = 'consolidated-view-group-id'
-    process.env.SINGLE_FRONT_DOOR_ENTITY_ID = 'single-front-door-group-id'
-    process.env.SFI_REFORM_ENTITY_ID = 'sfi-reform-group-id'
-    process.env.LAND_GRANTS_API_ENTITY_ID = 'land-grants-api-group-id'
-    process.env.LAND_APP_TECH_SPIKES_ENTITY_ID = 'land-app-tech-spikes-group-id'
+    process.env.ADMIN_ENTITY_ID = 'admin-entity-id'
+    process.env.CONSOLIDATED_VIEW_ENTITY_ID = 'consolidated-view-entity-id'
+    process.env.SINGLE_FRONT_DOOR_ENTITY_ID = 'single-front-door-entity-id'
+    process.env.SFI_REFORM_ENTITY_ID = 'sfi-reform-entity-id'
+    process.env.LAND_GRANTS_API_ENTITY_ID = 'land-grants-api-entity-id'
+    process.env.LAND_APP_TECH_SPIKES_ENTITY_ID = 'land-app-tech-spikes-entity-id'
     process.env.KITS_INTERNAL_CONNECTION_CERT = 'internal-cert-value'
     process.env.KITS_INTERNAL_CONNECTION_KEY = 'internal-key-value'
     process.env.KITS_INTERNAL_GATEWAY_URL = 'https://internal.example.com'
@@ -119,11 +125,17 @@ describe('config', () => {
     expect(config.get('defraId.wellKnownUrl')).toBe('https://example.com/defra-id-well-known')
     expect(config.get('defraId.timeoutMs')).toBe(4500)
     expect(config.get('auth.disabled')).toBe(false)
-    expect(config.get('auth.entities.ADMIN')).toBe('admin-group-id')
-    expect(config.get('auth.entities.CONSOLIDATED_VIEW')).toBe('consolidated-view-group-id')
-    expect(config.get('auth.entities.SINGLE_FRONT_DOOR')).toBe('single-front-door-group-id')
-    expect(config.get('auth.entities.SFI_REFORM')).toBe('sfi-reform-group-id')
-    expect(config.get('auth.entities.LAND_APP_TECH_SPIKES')).toBe('land-app-tech-spikes-group-id')
+    expect(config.get('auth.entities.ADMIN.entityId')).toBe('admin-entity-id')
+    expect(config.get('auth.entities.CONSOLIDATED_VIEW.entityId')).toBe(
+      'consolidated-view-entity-id'
+    )
+    expect(config.get('auth.entities.SINGLE_FRONT_DOOR.entityId')).toBe(
+      'single-front-door-entity-id'
+    )
+    expect(config.get('auth.entities.SFI_REFORM.entityId')).toBe('sfi-reform-entity-id')
+    expect(config.get('auth.entities.LAND_APP_TECH_SPIKES.entityId')).toBe(
+      'land-app-tech-spikes-entity-id'
+    )
     expect(config.get('kits.internal.connectionCert')).toBe('internal-cert-value')
     expect(config.get('kits.internal.connectionKey')).toBe('internal-key-value')
     expect(config.get('kits.internal.gatewayUrl')).toBe('https://internal.example.com')
@@ -170,7 +182,7 @@ describe('config', () => {
       'oidc.timeoutMs: must be an integer',
       'defraId.wellKnownUrl: must be of type String',
       'defraId.timeoutMs: must be an integer',
-      'auth.entities.ADMIN: must be of type String'
+      'auth.entities.ADMIN.entityId: must be of type String'
     ]
     await expect(loadFreshConfig()).rejects.toEqual(new Error(expectedErrors.join('\n')))
     process.env.DISABLE_AUTH = 'true'
@@ -258,37 +270,53 @@ describe('config', () => {
   })
 
   describe('auth settings', () => {
-    it('should have authEntities config matching .env.test setup', () => {
-      expect(authEntities).toEqual({
-        ADMIN: 'some-entity-id',
-        CONSOLIDATED_VIEW: 'consolidated-view-entity-id',
-        LAND_GRANTS_API: 'land-grants-api-entity-id',
-        SFI_REFORM: 'sfi-reform-entity-id',
-        SINGLE_FRONT_DOOR: 'single-front-door-entity-id',
-        LAND_APP_TECH_SPIKES: 'land-app-tech-spikes-entity-id'
-      })
+    beforeEach(() => {
+      process.env.DISABLE_AUTH = 'false'
+      process.env.KITS_INTERNAL_CONNECTION_CERT = 'internal-cert'
+      process.env.KITS_INTERNAL_CONNECTION_KEY = 'internal-key'
+      process.env.KITS_EXTERNAL_CONNECTION_CERT = 'external-cert'
+      process.env.KITS_EXTERNAL_CONNECTION_KEY = 'external-key'
+      process.env.OIDC_JWKS_URI = 'https://example.com/jwks'
+      process.env.OIDC_JWKS_TIMEOUT_MS = '5000'
+      process.env.DEFRA_ID_WELL_KNOWN_URL = 'https://example.com/defra-id-well-known'
+      process.env.DEFRA_ID_TIMEOUT_MS = '4500'
     })
 
-    it('should have authEntityServiceName linked to the entity ID (app-reg or group)', () => {
-      expect(authEntityServiceName).toEqual({
-        'some-entity-id': 'ADMIN',
-        'consolidated-view-entity-id': 'CONSOLIDATED_VIEW',
-        'land-grants-api-entity-id': 'LAND_GRANTS_API',
-        'sfi-reform-entity-id': 'SFI_REFORM',
-        'single-front-door-entity-id': 'SINGLE_FRONT_DOOR',
-        'land-app-tech-spikes-entity-id': 'LAND_APP_TECH_SPIKES'
+    it('should have authorisedEntities config matching .env.test setup, with names', async () => {
+      process.env.ADMIN_ENTITY_ID = 'some-entity-id'
+      const { authorisedEntities } = await loadFreshConfig()
+
+      expect(authorisedEntities).toStrictEqual({
+        'some-entity-id': { entityId: 'some-entity-id', authName: 'ADMIN', serviceName: 'admin' },
+        'consolidated-view-entity-id': {
+          entityId: 'consolidated-view-entity-id',
+          authName: 'CONSOLIDATED_VIEW',
+          serviceName: 'consolidated-view'
+        },
+        'land-grants-api-entity-id': {
+          entityId: 'land-grants-api-entity-id',
+          authName: 'LAND_GRANTS_API',
+          serviceName: 'land-grants-api'
+        },
+        'sfi-reform-entity-id': {
+          entityId: 'sfi-reform-entity-id',
+          authName: 'SFI_REFORM',
+          serviceName: 'sfi-reform'
+        },
+        'single-front-door-entity-id': {
+          entityId: 'single-front-door-entity-id',
+          authName: 'SINGLE_FRONT_DOOR',
+          serviceName: 'single-front-door'
+        },
+        'land-app-tech-spikes-entity-id': {
+          entityId: 'land-app-tech-spikes-entity-id',
+          authName: 'LAND_APP_TECH_SPIKES',
+          serviceName: 'land-app-tech-spikes-api'
+        }
       })
     })
 
     describe('ALL entity config MUST be set in the env with auth enabled', () => {
-      beforeEach(() => {
-        process.env.DISABLE_AUTH = 'false'
-        process.env.KITS_INTERNAL_CONNECTION_CERT = 'internal-cert'
-        process.env.KITS_INTERNAL_CONNECTION_KEY = 'internal-key'
-        process.env.KITS_EXTERNAL_CONNECTION_CERT = 'external-cert'
-        process.env.KITS_EXTERNAL_CONNECTION_KEY = 'external-key'
-      })
-
       it.each([
         'ADMIN',
         'CONSOLIDATED_VIEW',
@@ -299,7 +327,7 @@ describe('config', () => {
       ])('should throw an error if the %s entity config is missing', async (entity) => {
         delete process.env[`${entity}_ENTITY_ID`]
         await expect(loadFreshConfig()).rejects.toThrow(
-          `auth.entities.${entity}: must be of type String`
+          `auth.entities.${entity}.entityId: must be of type String`
         )
       })
     })

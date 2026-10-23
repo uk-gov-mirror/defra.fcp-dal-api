@@ -154,7 +154,7 @@ describe('internalUser.permittedFunctions', () => {
   })
 
   test('authenticated but not in the SFD group - the internalUser query is blocked', async () => {
-    const consolidatedViewGroup = config.get('auth.entities.CONSOLIDATED_VIEW')
+    const consolidatedViewGroup = config.get('auth.entities.CONSOLIDATED_VIEW.entityId')
     enableAuth()
 
     const result = await makeTestQuery(query, null, false, { functions: ['viewLand'] }, [

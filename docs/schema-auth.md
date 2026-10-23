@@ -21,10 +21,9 @@ It is implemented as a schema transformer (`authDirectiveTransformer`) in
 
 ### `requires` - which consumer entities can call this field
 
-`requires` names one or more services (configured in `app/config.js`, the
-`auth.entities.{ADMIN,CONSOLIDATED_VIEW,...}`), each mapping an Entra app-reg or AD group ID
-(referred to as the entity ID) to a consuming system name (Consolidated View, Single Front Door,
-Grants Platform, etc).
+`requires` names one or more services (configured in `app/config.js`, under
+`auth.entities.{ADMIN,CONSOLIDATED_VIEW,...}`). Each entity groups its Entra app-reg or AD group ID
+(`entityId`), the name used by `@auth` (`authName`), and the consuming system name (`serviceName`).
 
 This comes from a **different** header than the ones in [DAL Authentication](./auth): the caller's
 authorised identity is read from the `appid`, `azp`, or `groups` claim of the Entra ID JWT sent in
@@ -34,8 +33,8 @@ Authorization first compares the token's `appid`/`azp` claim to the configured I
 to checking the `groups` claim for the first match.
 This identifies _which system_ is calling the DAL.
 The end user is identified by one-of `email`/`x-forwarded-authorization`/`service-account` headers.
-Every field-level `@auth` check is made against the service name (`context.auth.serviceName`),
-which was assigned by matching the entity ID.
+Every field-level `@auth` check is made against the authorization name (`context.auth.authName`),
+while `context.auth.serviceName` identifies the service in audit and metrics data.
 
 A caller with the configured `ADMIN` app-reg (or group) ID is ALWAYS allowed, irrespective of the
 services listed by `requires`.

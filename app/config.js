@@ -1,6 +1,93 @@
 import convict from 'convict'
 
 export const cdpEnvironments = ['dev', 'test', 'ext-test', 'perf-test', 'prod']
+const entityConfig = {
+  ADMIN: {
+    entityId: {
+      doc: 'Entra app-reg or AD group ID for DAL Admins',
+      format: String,
+      default: null,
+      env: 'ADMIN_ENTITY_ID',
+      nullable: process.env.DISABLE_AUTH === 'true'
+    },
+    authName: 'ADMIN',
+    serviceName: 'admin'
+  },
+  CONSOLIDATED_VIEW: {
+    entityId: {
+      doc: 'Entra app-reg or AD group ID for Consolidated View',
+      format: String,
+      default: null,
+      env: 'CONSOLIDATED_VIEW_ENTITY_ID',
+      nullable: process.env.DISABLE_AUTH === 'true'
+    },
+    authName: 'CONSOLIDATED_VIEW',
+    serviceName: 'consolidated-view'
+  },
+  SINGLE_FRONT_DOOR: {
+    entityId: {
+      doc: 'Entra app-reg or AD group ID for SFD',
+      format: String,
+      default: null,
+      env: 'SINGLE_FRONT_DOOR_ENTITY_ID',
+      nullable: process.env.DISABLE_AUTH === 'true'
+    },
+    authName: 'SINGLE_FRONT_DOOR',
+    serviceName: 'single-front-door'
+  },
+  SFI_REFORM: {
+    entityId: {
+      doc: 'Entra app-reg or AD group ID for Future grants team',
+      format: String,
+      default: null,
+      env: 'SFI_REFORM_ENTITY_ID',
+      nullable: process.env.DISABLE_AUTH === 'true'
+    },
+    authName: 'SFI_REFORM',
+    serviceName: 'sfi-reform'
+  },
+  LAND_GRANTS_API: {
+    entityId: {
+      doc: 'Entra app-reg or AD group ID for Land Grants API team',
+      format: String,
+      default: null,
+      env: 'LAND_GRANTS_API_ENTITY_ID',
+      nullable: process.env.DISABLE_AUTH === 'true'
+    },
+    authName: 'LAND_GRANTS_API',
+    serviceName: 'land-grants-api'
+  },
+  LAND_APP_TECH_SPIKES: {
+    entityId: {
+      doc: 'Entra app-reg or AD group ID for Land App Tech Spikes API team',
+      format: String,
+      default: null,
+      env: 'LAND_APP_TECH_SPIKES_ENTITY_ID',
+      nullable: process.env.DISABLE_AUTH === 'true'
+    },
+    authName: 'LAND_APP_TECH_SPIKES',
+    serviceName: 'land-app-tech-spikes-api'
+  }
+}
+
+const authEntitySchema = Object.fromEntries(
+  Object.entries(entityConfig).map(([key, entity]) => [
+    key,
+    {
+      entityId: entity.entityId,
+      authName: {
+        doc: 'Name used by the @auth directive',
+        format: String,
+        default: entity.authName
+      },
+      serviceName: {
+        doc: 'Name used to identify the calling service in logs and metrics',
+        format: String,
+        default: entity.serviceName
+      }
+    }
+  ])
+)
 
 export const config = convict({
   nodeEnv: {
@@ -93,53 +180,7 @@ export const config = convict({
     }
   },
   auth: {
-    entities: {
-      // Note: must correspond with the ID of the consumer's Entra app-reg or AD group.
-      // When adding an entity config to identify a new calling service,
-      // also need to update `authEntityServiceName` below with the service name.
-      ADMIN: {
-        doc: 'Entra app-reg or AD group ID for DAL Admins',
-        format: String,
-        default: null,
-        env: 'ADMIN_ENTITY_ID',
-        nullable: process.env.DISABLE_AUTH === 'true'
-      },
-      CONSOLIDATED_VIEW: {
-        doc: 'Entra app-reg or AD group ID for Consolidated View',
-        format: String,
-        default: null,
-        env: 'CONSOLIDATED_VIEW_ENTITY_ID',
-        nullable: process.env.DISABLE_AUTH === 'true'
-      },
-      SINGLE_FRONT_DOOR: {
-        doc: 'Entra app-reg or AD group ID for SFD',
-        format: String,
-        default: null,
-        env: 'SINGLE_FRONT_DOOR_ENTITY_ID',
-        nullable: process.env.DISABLE_AUTH === 'true'
-      },
-      SFI_REFORM: {
-        doc: 'Entra app-reg or AD group ID for Future grants team',
-        format: String,
-        default: null,
-        env: 'SFI_REFORM_ENTITY_ID',
-        nullable: process.env.DISABLE_AUTH === 'true'
-      },
-      LAND_GRANTS_API: {
-        doc: 'Entra app-reg or AD group ID for Land Grants API team',
-        format: String,
-        default: null,
-        env: 'LAND_GRANTS_API_ENTITY_ID',
-        nullable: process.env.DISABLE_AUTH === 'true'
-      },
-      LAND_APP_TECH_SPIKES: {
-        doc: 'Entra app-reg or AD group ID for Land App Tech Spikes API team',
-        format: String,
-        default: null,
-        env: 'LAND_APP_TECH_SPIKES_ENTITY_ID',
-        nullable: process.env.DISABLE_AUTH === 'true'
-      }
-    },
+    entities: authEntitySchema,
     disabled: {
       doc: 'Whether authentication is disabled, used for testing',
       format: Boolean,
@@ -353,15 +394,15 @@ export const config = convict({
 
 config.validate({ allowed: 'strict' })
 
-export const authEntities = config.get('auth.entities')
-export const authEntityServiceName = {
-  [authEntities.ADMIN]: 'ADMIN',
-  [authEntities.CONSOLIDATED_VIEW]: 'CONSOLIDATED_VIEW',
-  [authEntities.LAND_GRANTS_API]: 'LAND_GRANTS_API',
-  [authEntities.SFI_REFORM]: 'SFI_REFORM',
-  [authEntities.SINGLE_FRONT_DOOR]: 'SINGLE_FRONT_DOOR',
-  [authEntities.LAND_APP_TECH_SPIKES]: 'LAND_APP_TECH_SPIKES'
-}
+export const authorisedEntities = Object.values(config.get('auth.entities')).reduce(
+  (entities, entity) => {
+    if (entity.entityId) {
+      entities[entity.entityId] = entity
+    }
+    return entities
+  },
+  {}
+)
 
 export const decodeBase64Config = (value) => Buffer.from(value, 'base64').toString('utf-8').trim()
 
