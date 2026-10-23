@@ -394,6 +394,7 @@ export const config = convict({
 
 config.validate({ allowed: 'strict' })
 
+// add authorised entities where configuration exists
 export const authorisedEntities = Object.values(config.get('auth.entities')).reduce(
   (entities, entity) => {
     if (entity.entityId) {
